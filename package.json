@@ -1,0 +1,19 @@
+{
+  "name": "emberly",
+  "private": true,
+  "packageManager": "pnpm@10.28.2",
+  "scripts": {
+    "dev": "pnpm --filter web dev",
+    "mobile": "pnpm --filter mobile start",
+    "test": "pnpm -r --if-present test",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "telegram:poll": "pnpm --filter web telegram:poll",
+    "telegram:set-webhook": "pnpm --filter web telegram:set-webhook"
+  },
+  "pnpm": {
+    "overrides": {
+      "react": "19.3.0",
+      "react-dom": "19.3.0"
+    }
+  }
+}
