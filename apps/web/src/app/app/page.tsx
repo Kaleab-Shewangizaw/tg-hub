@@ -4,7 +4,7 @@ import { Suspense } from 'react';
 import { formatLongDate, zonedParts } from '@emberly/core';
 import { ChannelStatusChip } from '@/components/ChannelStatus';
 import { DashboardView } from '@/components/Dashboard';
-import { IconArrow, IconTelegram } from '@/components/icons';
+import { IconArrow, IconInfo, IconTelegram } from '@/components/icons';
 import { DashboardSkeleton } from '@/components/Skeletons';
 import { requireUser } from '@/server/auth';
 import { loadDashboard } from '@/server/dashboard';
@@ -37,16 +37,16 @@ async function Overview() {
     return (
       <div className="onboard rise">
         <span className="onboard-icon">
-          <IconTelegram size={26} />
+          <IconTelegram size={22} />
         </span>
         <h1>Welcome, {first}</h1>
-        <p className="muted">Connect a Telegram channel to start your activity map.</p>
+        <p className="muted">Connect your Telegram channel and Emberly will start mapping your posts. It takes about two minutes.</p>
         <div className="onboard-ctas">
           <Link href="/app/channels" className="btn btn-accent btn-lg">
-            Connect a channel <IconArrow size={18} />
+            Connect a channel <IconArrow size={16} />
           </Link>
           <Link href="/demo" className="btn btn-ghost btn-lg">
-            See a demo
+            Explore the demo
           </Link>
         </div>
       </div>
@@ -75,15 +75,16 @@ async function Overview() {
               <ChannelStatusChip status={channels[0]!.status} />
             </Link>
           ) : null}
-          <Link href="/app/settings" className="chip">
+          <Link href="/app/settings" className="chip" title="Change your goal">
             {dashboard.goalLabel}
           </Link>
         </div>
       </div>
 
       {attention ? (
-        <p className="banner banner-amber">
-          {attention.title} needs a quick look. <Link href="/app/channels">Check setup</Link>
+        <p className="banner banner-amber" role="status">
+          <IconInfo size={16} /> {attention.title} needs a quick look before it can track posts.
+          <Link href="/app/channels">Check setup</Link>
         </p>
       ) : null}
 

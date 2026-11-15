@@ -1,11 +1,10 @@
 import type { Metadata, Viewport } from 'next';
-import { Geist, Instrument_Serif } from 'next/font/google';
+import { Geist } from 'next/font/google';
 import './globals.css';
 import '../styles/app.css';
 import '../styles/landing.css';
 
 const geist = Geist({ subsets: ['latin'], variable: '--font-geist' });
-const serif = Instrument_Serif({ subsets: ['latin'], weight: '400', style: 'italic', variable: '--font-instrument-serif' });
 
 export const metadata: Metadata = {
   title: { default: 'Emberly · Your posting rhythm, beautifully kept', template: '%s · Emberly' },
@@ -14,8 +13,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#f7f7f8' },
-    { media: '(prefers-color-scheme: dark)', color: '#0b0b0f' },
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#151518' },
   ],
 };
 
@@ -24,7 +23,7 @@ const themeScript = `try{var t=localStorage.getItem('emberly-theme');if(t==='lig
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${geist.variable} ${serif.variable}`} suppressHydrationWarning>
+    <html lang="en" className={geist.variable} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>

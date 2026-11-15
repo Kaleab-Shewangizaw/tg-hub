@@ -24,7 +24,7 @@ export function DemoDashboard() {
       <div className="page-head rise">
         <div>
           <p className="eyebrow">Field Notes · sample channel</p>
-          <h1>Good to see you</h1>
+          <h1>Overview</h1>
         </div>
         <div className="page-head-meta">
           <span className="chip chip-mint chip-dot">Tracking</span>

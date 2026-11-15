@@ -11,7 +11,7 @@ async function UserMenu() {
   if (!user) return null;
   return (
     <details className="menu">
-      <summary className="avatar-btn" aria-label={`Account menu for ${user.name}`}>
+      <summary className="avatar-btn" aria-label={`Account menu for ${user.name}`} title={user.name}>
         {user.name.trim()[0]?.toUpperCase() ?? '·'}
       </summary>
       <div className="menu-pop">

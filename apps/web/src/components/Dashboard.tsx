@@ -27,8 +27,8 @@ export function DashboardView({ model, capabilities, basePath }: DashboardViewPr
           <h2 className="panel-title" id="activity-title">
             Activity
           </h2>
-          <p className="faint small">
-            {model.grid.totals.posts} posts · since {formatShortDate(model.trackingStart)}
+          <p className="panel-sub">
+            {model.grid.totals.posts} posts since {formatShortDate(model.trackingStart)}
           </p>
         </div>
         <ActivityGrid grid={model.grid} dayPosts={model.dayPosts} weekGoals={model.weekGoals} today={model.today} />
@@ -40,50 +40,45 @@ export function DashboardView({ model, capabilities, basePath }: DashboardViewPr
   );
 }
 
-function Ring({ value, target }: { value: number; target: number }) {
-  const r = 34;
-  const c = 2 * Math.PI * r;
-  const pct = target > 0 ? Math.min(1, value / target) : 0;
-  return (
-    <svg className="ring" viewBox="0 0 80 80" width="84" height="84" aria-hidden>
-      <circle cx="40" cy="40" r={r} className="ring-track" />
-      <circle cx="40" cy="40" r={r} className="ring-fill" strokeDasharray={`${c * pct} ${c}`} transform="rotate(-90 40 40)" />
-    </svg>
-  );
-}
+const GOAL_STATE: Record<DashboardModel['progress']['state'], { label: string; tone: string } | null> = {
+  in_progress: null,
+  met: { label: 'Goal met', tone: 'chip-mint' },
+  rest: { label: 'Rest day', tone: 'chip-slate' },
+  paused: { label: 'On a break', tone: 'chip-slate' },
+};
 
 function GoalTile({ model }: { model: DashboardModel }) {
   const p = model.progress;
   const calm = p.state === 'rest' || p.state === 'paused';
-  const sub = calm
-    ? p.nextScheduledDay
-      ? `Next goal day · ${formatShortDate(p.nextScheduledDay)}`
-      : 'Enjoy the quiet'
-    : p.unit === 'week'
-      ? `${p.posted} of ${p.target} · ${p.daysLeft === 1 ? 'last day' : `${p.daysLeft} days left`}`
-      : `${p.posted} of ${p.target} today`;
+  const chip = GOAL_STATE[p.state];
+  const when = p.unit === 'week' ? (p.daysLeft === 1 ? 'Last day' : `${p.daysLeft} days left`) : 'Today';
   return (
     <section className={`tile-goal is-${p.state}`} aria-labelledby="goal-title">
-      <div className="goal-copy">
-        <p className="label">{p.unit === 'week' ? 'This week' : 'Today'}</p>
-        <h2 id="goal-title" className="goal-headline">
-          {p.headline}
+      <div className="tile-top">
+        <h2 id="goal-title" className="tile-label">
+          {p.unit === 'week' ? 'This week' : 'Today'}
         </h2>
-        <p className="goal-sub">{sub}</p>
+        {chip ? <span className={`chip ${chip.tone}`}>{chip.label}</span> : null}
       </div>
-      <div className="goal-visual">
-        {calm ? (
-          <span className="calm-badge">{p.state === 'paused' ? <IconPause size={30} /> : <IconLeaf size={30} />}</span>
-        ) : (
-          <div className="ring-wrap">
-            <Ring value={p.posted} target={p.target} />
-            <span className="ring-label" aria-hidden>
-              {p.posted}
-              <small>/{p.target}</small>
+      <p className="goal-headline">{p.headline}</p>
+      {calm ? (
+        <p className="goal-sub">
+          <span>
+            {p.state === 'paused' ? <IconPause size={14} /> : <IconLeaf size={14} />}{' '}
+            {p.nextScheduledDay ? `Next goal day · ${formatShortDate(p.nextScheduledDay)}` : 'Enjoy the quiet'}
+          </span>
+        </p>
+      ) : (
+        <div className="goal-progress">
+          <Meter value={p.posted} max={p.target} label="Goal progress" />
+          <p className="goal-sub">
+            <span>
+              <span className="goal-count">{p.posted}</span> of {p.target} posts
             </span>
-          </div>
-        )}
-      </div>
+            <span>{when}</span>
+          </p>
+        </div>
+      )}
     </section>
   );
 }
@@ -93,14 +88,14 @@ function StreakTile({ model }: { model: DashboardModel }) {
   const unit = s.unit === 'week' ? (s.current === 1 ? 'week' : 'weeks') : s.current === 1 ? 'day' : 'days';
   return (
     <section className="tile-stat" aria-label={`Current streak ${s.current} ${unit}, best ${s.best}`}>
-      <p className="label tile-stat-label">
+      <p className="tile-label">
         <IconFlame size={15} /> Streak
       </p>
       <p className="big-num">
         {s.current}
         <span className="big-unit">{unit}</span>
       </p>
-      <p className="faint small">Best · {s.best}</p>
+      <p className="faint small">Best: {s.best}</p>
     </section>
   );
 }
@@ -114,11 +109,11 @@ function ReactionsTile({ model }: { model: DashboardModel }) {
   const has = t.postsWithReactions > 0;
   return (
     <section className="tile-stat" aria-label={has ? `${t.reactions} reactions recorded` : 'No reactions recorded yet'}>
-      <p className="label tile-stat-label">
+      <p className="tile-label">
         <IconHeart size={15} /> Reactions
       </p>
       <p className="big-num">{has ? compact(t.reactions) : '—'}</p>
-      <p className="faint small">{has ? `~${Math.round(t.reactions / t.postsWithReactions)} per post` : 'None yet'}</p>
+      <p className="faint small">{has ? `About ${Math.round(t.reactions / t.postsWithReactions)} per post` : 'None recorded yet'}</p>
     </section>
   );
 }
@@ -173,13 +168,12 @@ function RecentPosts({ posts, capabilities }: { posts: Post[]; capabilities: Pro
         </div>
       ) : (
         <ol className="posts">
-          {posts.slice(0, 7).map((p) => {
+          {posts.slice(0, 6).map((p) => {
             const r = p.metrics.reactions;
             const fresh = !r && Date.now() - Date.parse(p.publishedAt) < 3_600_000;
             const tip = r?.breakdown?.map((b) => `${b.label} ${b.count}`).join('  ');
             const body = (
               <>
-                <span className={`post-dot kind-${p.kind}`} aria-hidden />
                 <span className="post-text">
                   <span className="post-preview">{p.textPreview ?? kindLabel(p.kind)}</span>
                   <span className="faint small" suppressHydrationWarning>
@@ -245,23 +239,23 @@ function MedalsPanel({ model, basePath }: { model: DashboardModel; basePath: str
         <div className="next-medal">
           <div className="next-medal-top">
             <span className="small">
-              Next · <strong>{next.next.label}</strong>
+              <span className="faint">Up next:</span> {next.next.label}
             </span>
             <span className="faint small">
               {Math.min(next.next.current, next.next.target)}/{next.next.target}
             </span>
           </div>
-          <Meter value={next.next.current} max={next.next.target} />
+          <Meter value={next.next.current} max={next.next.target} label={`Progress toward ${next.next.label}`} />
         </div>
       ) : null}
     </section>
   );
 }
 
-export function Meter({ value, max }: { value: number; max: number }) {
-  const pct = Math.min(100, Math.round((value / max) * 100));
+export function Meter({ value, max, label }: { value: number; max: number; label?: string }) {
+  const pct = max > 0 ? Math.min(100, Math.round((value / max) * 100)) : 0;
   return (
-    <div className="meter" role="progressbar" aria-valuemin={0} aria-valuemax={max} aria-valuenow={Math.min(value, max)}>
+    <div className="meter" role="progressbar" aria-label={label} aria-valuemin={0} aria-valuemax={max} aria-valuenow={Math.min(value, max)}>
       <span style={{ width: `${pct}%` }} />
     </div>
   );

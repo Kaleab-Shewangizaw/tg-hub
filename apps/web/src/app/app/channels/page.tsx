@@ -45,17 +45,17 @@ async function Channels() {
         <div className="step-body">
           <h3>Link your Telegram</h3>
           {linked ? (
-            <div className="small muted" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              Linked as <strong style={{ color: 'var(--ink)' }}>{user.telegramName}</strong>
+            <div className="step-linked">
+              Linked as <strong>{user.telegramName}</strong>
               <form action={unlinkTelegramAction}>
-                <button type="submit" className="btn-text small">
+                <button type="submit" className="btn-text btn-quiet small">
                   Unlink
                 </button>
               </form>
             </div>
           ) : (
             <>
-              <p>So we know it’s you, and where to send reminders.</p>
+              <p>This confirms it’s you and lets the bot send your reminders.</p>
               <LinkTelegram mode={mode} linked={linked} />
             </>
           )}
@@ -67,14 +67,14 @@ async function Channels() {
           <h3>Add {botName} as an admin</h3>
           {!connected ? (
             <>
-              <p>Channel → Administrators → Add admin. Turn every permission off; it only reads.</p>
+              <p>In your channel: Administrators → Add admin. You can turn every permission off. The bot only reads.</p>
               {mode === 'development' && linked ? (
                 <form action={simulateAddChannelAction} className="row-form">
                   <label htmlFor="sim-title" className="sr-only">
                     Channel name
                   </label>
                   <input id="sim-title" name="title" className="input" placeholder="Channel name" defaultValue="My channel" />
-                  <button className="btn btn-accent btn-sm" type="submit" style={{ height: 42 }}>
+                  <button className="btn btn-accent" type="submit">
                     Simulate add
                   </button>
                 </form>
@@ -86,11 +86,11 @@ async function Channels() {
       <li className={`step-v ${connected ? 'is-done' : ''}`}>
         <span className="step-mark">{connected ? <IconCheck size={16} /> : 3}</span>
         <div className="step-body">
-          <h3>Confirm</h3>
+          <h3>Confirm the connection</h3>
           {!connected ? (
             mode === 'live' ? (
               <>
-                <p>It connects on its own. Or check by username:</p>
+                <p>It usually connects on its own. You can also check by username:</p>
                 <VerifyChannelForm />
               </>
             ) : (
@@ -106,8 +106,10 @@ async function Channels() {
     <>
       <div className="page-head rise">
         <div>
-          <p className="eyebrow">{channels.length === 0 ? 'Not connected yet' : `${channels.length} channel${channels.length === 1 ? '' : 's'}`}</p>
           <h1>Channels</h1>
+          <p className="page-head-desc">
+            {channels.length === 0 ? 'Connect a Telegram channel to start tracking.' : `${channels.length} channel${channels.length === 1 ? '' : 's'} connected.`}
+          </p>
         </div>
         {mode === 'development' ? (
           <span className="chip chip-outline" title="No TELEGRAM_BOT_TOKEN set. Every step is simulated.">
@@ -154,13 +156,13 @@ async function Channels() {
                       Post text
                     </label>
                     <input id={`post-${c.id}`} name="text" className="input" placeholder="Write a post…" />
-                    <button className="btn btn-sm" type="submit" style={{ height: 42 }}>
+                    <button className="btn" type="submit">
                       Publish
                     </button>
                   </form>
                   <form action={simulateReactionsAction}>
                     <input type="hidden" name="channelId" value={c.id} />
-                    <button className="btn btn-ghost btn-sm" type="submit">
+                    <button className="btn btn-ghost btn-sm" type="submit" style={{ justifySelf: 'start' }}>
                       <IconHeart size={14} /> React to latest
                     </button>
                   </form>
@@ -174,17 +176,15 @@ async function Channels() {
           ))}
 
           {connected ? (
-            <details className="panel">
-              <summary className="panel-title" style={{ cursor: 'pointer' }}>
-                Connect another channel
-              </summary>
-              <div style={{ marginTop: 20 }}>{setup}</div>
+            <details className="panel disclosure">
+              <summary className="panel-title">Connect another channel</summary>
+              <div className="disclosure-body">{setup}</div>
             </details>
           ) : (
             <section className="panel" aria-label="Setup">
               <div className="panel-head">
                 <h2 className="panel-title">Connect a channel</h2>
-                <span className="faint small">Step {step} of 3</span>
+                <span className="panel-sub">Step {step} of 3</span>
               </div>
               {setup}
             </section>
@@ -193,19 +193,15 @@ async function Channels() {
 
         <div className="stack">
           <section className="panel" aria-labelledby="import-title">
-            <div className="panel-head" style={{ marginBottom: 6 }}>
-              <h2 id="import-title" className="panel-title">
-                Import history
-              </h2>
-            </div>
-            <p className="muted small" style={{ marginBottom: 14 }}>
-              Bots can’t see older posts. Bring them in from a Telegram export.
+            <h2 id="import-title" className="panel-title">
+              Import past posts
+            </h2>
+            <p className="muted small" style={{ margin: '4px 0 14px' }}>
+              The bot only sees posts made after it joins. Add older ones from a Telegram export.
             </p>
             <details className="small" style={{ marginBottom: 14 }}>
-              <summary className="btn-text small" style={{ cursor: 'pointer' }}>
-                How to export
-              </summary>
-              <ol className="muted" style={{ paddingLeft: 18, margin: '8px 0 0', display: 'grid', gap: 4 }}>
+              <summary className="btn-text small">How do I export?</summary>
+              <ol className="howto" style={{ marginTop: 8 }}>
                 <li>Telegram Desktop → your channel → ⋮ → Export chat history</li>
                 <li>Untick media, choose “JSON”</li>
                 <li>
@@ -217,22 +213,22 @@ async function Channels() {
           </section>
 
           <section className="panel" aria-labelledby="tracked-title">
-            <h2 id="tracked-title" className="panel-title" style={{ marginBottom: 14 }}>
+            <h2 id="tracked-title" className="panel-title" style={{ marginBottom: 12 }}>
               What’s tracked
             </h2>
-            <div className="track-list">
-              <span className="chip chip-mint">
-                <IconCheck size={13} /> Posts
-              </span>
-              <span className="chip chip-mint">
-                <IconCheck size={13} /> Reactions
-              </span>
-              <span className="chip chip-outline" title="The Telegram Bot API doesn’t share views, forwards or comment counts.">
-                <IconX size={13} /> Views
-              </span>
-            </div>
-            <p className="faint small" style={{ marginTop: 14 }}>
-              Read-only. The bot never posts, edits or deletes.
+            <ul className="track-list">
+              <li>
+                <IconCheck size={15} /> Every new post
+              </li>
+              <li>
+                <IconCheck size={15} /> Reactions on posts
+              </li>
+              <li className="off" title="The Telegram Bot API doesn’t share views, forwards or comment counts.">
+                <IconX size={15} /> Views, forwards and comments (not shared by Telegram)
+              </li>
+            </ul>
+            <p className="faint small" style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid var(--line)' }}>
+              Read-only. The bot never posts, edits or deletes anything.
             </p>
           </section>
         </div>

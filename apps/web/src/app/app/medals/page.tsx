@@ -23,10 +23,10 @@ async function Medals() {
     <>
       <div className="page-head rise">
         <div>
-          <p className="eyebrow">
-            {earned} of {dashboard.medals.length} earned
-          </p>
           <h1>Medals</h1>
+          <p className="page-head-desc">
+            {earned} of {dashboard.medals.length} earned. Each one is based on your real posts.
+          </p>
         </div>
       </div>
       <MedalCards medals={dashboard.medals} />

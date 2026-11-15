@@ -1,8 +1,7 @@
 import Link from 'next/link';
 import { buildDashboard, generateDemoData } from '@emberly/core';
 import { GridPreview } from '@/components/GridPreview';
-import { IconArrow, IconCheck, IconFlame, IconHeart, IconTelegram, IconX, Logo } from '@/components/icons';
-import { MedalArt } from '@/components/MedalArt';
+import { IconArrow, IconBell, IconCheck, IconHeart, IconMedal, IconPause, IconSliders, IconTelegram, IconX, Logo } from '@/components/icons';
 
 // A fixed date keeps the landing page fully static.
 const SAMPLE_NOW = '2026-10-29T16:00:00Z';
@@ -11,6 +10,19 @@ function sample() {
   const demo = generateDemoData(SAMPLE_NOW, 'UTC');
   return buildDashboard({ posts: demo.posts, channels: [demo.channel], schedule: demo.schedule, now: SAMPLE_NOW });
 }
+
+const FEATURES = [
+  { Icon: IconSliders, title: 'Your rhythm, your rules', text: 'Post daily, on set days, or a number of times a week. Streaks follow your goal, not ours.' },
+  { Icon: IconPause, title: 'Breaks are built in', text: 'Plan time off ahead. Rest days and breaks never break a streak.' },
+  { Icon: IconBell, title: 'Gentle reminders', text: 'At most one Telegram message a day, at your time, and never during quiet hours.' },
+  { Icon: IconMedal, title: 'Medals that mean something', text: 'Earned from your real posts. Every medal tells you exactly why you got it.' },
+];
+
+const STEPS = [
+  { title: 'Link Telegram', text: 'Press Start in the Emberly bot so we know it’s you.' },
+  { title: 'Add the bot to your channel', text: 'As an admin with every permission off. It only reads.' },
+  { title: 'Pick your rhythm', text: 'Set a goal and reminders. Your grid fills in as you post.' },
+];
 
 export default function Landing() {
   const m = sample();
@@ -36,220 +48,128 @@ export default function Landing() {
       </header>
 
       <main id="main">
-        {/* Hero */}
         <section className="hero container">
-          <div className="hero-glow" aria-hidden />
-          <span className="chip chip-accent hero-eyebrow rise">
-            <IconTelegram size={14} /> For Telegram creators
+          <span className="chip hero-eyebrow">
+            <IconTelegram size={13} /> For Telegram channel creators
           </span>
-          <h1 className="hero-title rise" style={{ animationDelay: '60ms' }}>
-            Your posting rhythm,
-            <br />
-            <span className="serif">beautifully kept.</span>
-          </h1>
-          <p className="hero-sub rise" style={{ animationDelay: '120ms' }}>
-            See every post on one calm grid. Keep streaks on your schedule. Get a gentle nudge when you need one.
-          </p>
-          <div className="hero-ctas rise" style={{ animationDelay: '180ms' }}>
+          <h1 className="hero-title">Your posting rhythm, kept simple.</h1>
+          <p className="hero-sub">See every post on one calm grid, keep streaks on your own schedule, and get a gentle nudge only when you need one.</p>
+          <div className="hero-ctas">
             <Link href="/sign-up" className="btn btn-accent btn-lg">
-              Start free <IconArrow size={18} />
+              Start for free <IconArrow size={16} />
             </Link>
             <Link href="/demo" className="btn btn-ghost btn-lg">
-              View live demo
+              View the demo
             </Link>
           </div>
 
-          {/* Product preview */}
-          <div className="preview rise" style={{ animationDelay: '260ms' }}>
-            <div className="preview-window">
-              <div className="preview-top">
-                <div className="preview-channel">
-                  <span className="avatar">F</span>
-                  <div>
-                    <p className="preview-name">Field Notes</p>
-                    <p className="faint small">Goal · 4 posts a week</p>
-                  </div>
-                </div>
-                <span className="chip chip-mint chip-dot">Tracking</span>
-              </div>
-              <div className="preview-stats">
+          <div className="preview" aria-label="Example dashboard for a sample channel" role="img">
+            <div className="preview-top">
+              <div className="preview-channel">
+                <span className="avatar">F</span>
                 <div>
-                  <p className="label">This week</p>
-                  <p className="stat-num">
-                    {m.progress.posted}
-                    <span className="faint">/{m.progress.target}</span>
-                  </p>
-                </div>
-                <div>
-                  <p className="label">Streak</p>
-                  <p className="stat-num">
-                    {m.streaks.current}
-                    <span className="stat-unit">wks</span>
-                  </p>
-                </div>
-                <div>
-                  <p className="label">Posts</p>
-                  <p className="stat-num">{m.totals.posts}</p>
-                </div>
-                <div className="hide-sm">
-                  <p className="label">Reactions</p>
-                  <p className="stat-num">{(m.totals.reactions / 1000).toFixed(1)}k</p>
+                  <p className="preview-name">Field Notes</p>
+                  <p className="faint small">Goal: 4 posts a week</p>
                 </div>
               </div>
-              <GridPreview grid={m.grid} />
+              <span className="chip chip-mint chip-dot">Tracking</span>
             </div>
-
-            <div className="float float-a" aria-hidden>
-              <span className="float-icon">
-                <IconTelegram size={16} />
-              </span>
-              {/* <div>
-                <p className="float-title">Emberly</p>
-                <p className="small muted">You’re one post away from your weekly goal ✨</p>
-              </div> */}
+            <div className="preview-stats">
+              <div>
+                <p className="label">This week</p>
+                <p className="stat-num">
+                  {m.progress.posted}
+                  <span className="stat-unit">/ {m.progress.target}</span>
+                </p>
+              </div>
+              <div>
+                <p className="label">Streak</p>
+                <p className="stat-num">
+                  {m.streaks.current}
+                  <span className="stat-unit">weeks</span>
+                </p>
+              </div>
+              <div>
+                <p className="label">Posts</p>
+                <p className="stat-num">{m.totals.posts}</p>
+              </div>
+              <div className="hide-sm">
+                <p className="label">Reactions</p>
+                <p className="stat-num">{(m.totals.reactions / 1000).toFixed(1)}k</p>
+              </div>
             </div>
-            <div className="float float-b" aria-hidden>
-              <MedalArt id="kept-rhythm" earned tier={2} size={40} />
-              {/* <div>
-                <p className="float-title">Kept Rhythm</p>
-                <p className="small muted">7 weeks in a row</p>
-              </div> */}
-            </div>
+            <GridPreview grid={m.grid} />
           </div>
         </section>
 
-        {/* Features */}
         <section id="features" className="section container">
           <div className="section-head">
-            <h2>
-              Consistency, <span className="serif">without the guilt.</span>
-            </h2>
+            <h2>Consistency, without the guilt</h2>
+            <p>Emberly is built to help you show up, not to make you feel bad when life happens.</p>
           </div>
-          <div className="bento">
-            <article className="tile tile-wide">
-              <div className="tile-copy">
-                <h3>Your rhythm, your rules</h3>
-                <p className="muted">Daily, set days, or a weekly number.</p>
-              </div>
-              <div className="viz-cadence" aria-hidden>
-                <span>Daily</span>
-                <span>Mon · Wed · Fri</span>
-                <span className="on">4 a week</span>
-              </div>
-            </article>
-
-            <article className="tile">
-              <div className="tile-copy">
-                <h3>Breaks are built in</h3>
-                <p className="muted">Planned time off never breaks a streak.</p>
-              </div>
-              <div className="viz-break" aria-hidden>
-                <div className="viz-row">
-                  {[3, 2, 4, 0, 0, 0, 0, 2, 3, 1].map((l, i) => (
-                    <span key={i} className={i >= 3 && i <= 6 ? 'pause' : `lv${l}`} />
-                  ))}
-                </div>
-                <span className="chip chip-mint">
-                  <IconFlame size={13} /> Streak kept
+          <ul className="features">
+            {FEATURES.map(({ Icon, title, text }) => (
+              <li key={title}>
+                <span className="feature-icon">
+                  <Icon size={18} />
                 </span>
-              </div>
-            </article>
-
-            <article className="tile">
-              <div className="tile-copy">
-                <h3>Gentle nudges</h3>
-                <p className="muted">One message, at your time. Never during quiet hours.</p>
-              </div>
-              <div className="viz-msg" aria-hidden>
-                <div className="bubble">
-                  A gentle nudge: nothing posted yet today. One post keeps your rhythm going.
-                  <span className="bubble-time">18:00</span>
-                </div>
-              </div>
-            </article>
-
-            <article className="tile tile-wide">
-              <div className="tile-copy">
-                <h3>Medals that mean something</h3>
-                <p className="muted">Earned from real posts. Each one says why.</p>
-              </div>
-              <div className="viz-medals" aria-hidden>
-                <MedalArt id="first-spark" earned tier={1} size={60} />
-                <MedalArt id="kept-rhythm" earned tier={2} size={60} />
-                <MedalArt id="crowd-favorite" earned tier={1} size={60} />
-                <MedalArt id="welcome-back" earned={false} size={60} />
-              </div>
-            </article>
-          </div>
+                <h3>{title}</h3>
+                <p>{text}</p>
+              </li>
+            ))}
+          </ul>
         </section>
 
-        {/* How it works */}
         <section id="how" className="section container">
           <div className="section-head">
-            <h2>
-              Set up in <span className="serif">two minutes.</span>
-            </h2>
+            <h2>Set up in two minutes</h2>
+            <p>No passwords to share and nothing to install in your channel.</p>
           </div>
           <ol className="steps">
-            <li>
-              <span className="step-n">1</span>
-              <h3>Link Telegram</h3>
-              <p className="muted">Tap Start in our bot.</p>
-            </li>
-            <li>
-              <span className="step-n">2</span>
-              <h3>Add the bot</h3>
-              <p className="muted">As a channel admin. Read-only.</p>
-            </li>
-            <li>
-              <span className="step-n">3</span>
-              <h3>Pick your rhythm</h3>
-              <p className="muted">Your goal, your reminders.</p>
-            </li>
+            {STEPS.map((s, i) => (
+              <li key={s.title}>
+                <span className="step-n">{i + 1}</span>
+                <h3>{s.title}</h3>
+                <p>{s.text}</p>
+              </li>
+            ))}
           </ol>
         </section>
 
-        {/* Honest numbers */}
         <section className="section container">
           <div className="honest">
             <div>
-              <h2>
-                Real numbers. <span className="serif">Only.</span>
-              </h2>
-              <p className="muted" style={{ marginTop: 10 }}>
-                We show what Telegram shares, and say so when it doesn’t.
-              </p>
+              <h2>Real numbers only</h2>
+              <p>We show exactly what Telegram shares with bots, and we tell you when something isn’t available.</p>
             </div>
             <ul className="honest-list">
               <li>
                 <IconCheck size={16} /> Every new post
               </li>
               <li>
-                <IconHeart size={16} /> Reactions
+                <IconHeart size={16} /> Reactions on each post
               </li>
               <li>
-                <IconCheck size={16} /> History import
+                <IconCheck size={16} /> Import of older posts
               </li>
               <li className="off">
-                <IconX size={16} /> Views, not shared by Telegram
+                <IconX size={16} /> Views (not shared by Telegram)
               </li>
             </ul>
           </div>
         </section>
 
-        {/* CTA */}
-        <section className="container">
+        <section className="section container">
           <div className="cta">
-            <GridPreview grid={m.grid} weeks={30} />
-            <div className="cta-inner">
-              <h2>
-                Show up. <span className="serif">At your pace.</span>
-              </h2>
-              <div className="hero-ctas">
-                <Link href="/sign-up" className="btn btn-accent btn-lg">
-                  Create your profile
-                </Link>
-              </div>
+            <h2>Show up, at your own pace.</h2>
+            <p>Free to use. Set up in a couple of minutes.</p>
+            <div className="hero-ctas">
+              <Link href="/sign-up" className="btn btn-accent btn-lg">
+                Create your account
+              </Link>
+              <Link href="/demo" className="btn btn-ghost btn-lg">
+                View the demo
+              </Link>
             </div>
           </div>
         </section>

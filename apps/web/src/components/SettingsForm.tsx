@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, useTransition } from 'react';
 import { formatShortDate, WEEKDAY_SHORT, type Cadence, type SettingsInput, type Weekday } from '@emberly/core';
 import { saveSettingsAction } from '@/app/actions/settings';
-import { IconPlus, IconX } from './icons';
+import { IconCheck, IconPlus, IconX } from './icons';
 
 const DAY_ORDER: Weekday[] = [1, 2, 3, 4, 5, 6, 0];
 
@@ -86,13 +86,16 @@ export function SettingsForm({ initial }: { initial: SettingsInput }) {
       }}
     >
       <section className="set-section" aria-labelledby="goal-h">
-        <h2 id="goal-h" className="set-section-title">
-          Goal
-        </h2>
+        <div className="set-section-head">
+          <h2 id="goal-h" className="set-section-title">
+            Your goal
+          </h2>
+          <p className="set-section-desc">How often you want to post. Streaks are counted in this rhythm.</p>
+        </div>
+        <div className="set-card">
         <div className="set-row">
           <div className="set-row-text">
-            <span>Cadence</span>
-            <span className="hint">Streaks count in this unit.</span>
+            <span>Rhythm</span>
           </div>
           <fieldset className="seg" aria-label="Cadence">
             {(
@@ -177,16 +180,20 @@ export function SettingsForm({ initial }: { initial: SettingsInput }) {
             ))}
           </fieldset>
         </div>
+        </div>
       </section>
 
       <section className="set-section" aria-labelledby="rem-h">
-        <h2 id="rem-h" className="set-section-title">
-          Reminders
-        </h2>
+        <div className="set-section-head">
+          <h2 id="rem-h" className="set-section-title">
+            Reminders
+          </h2>
+          <p className="set-section-desc">At most one Telegram message a day, and only when your goal isn’t met yet.</p>
+        </div>
+        <div className="set-card">
         <div className="set-row">
           <div className="set-row-text">
-            <label htmlFor="rem-on">Gentle reminders</label>
-            <span className="hint">One Telegram message, only if your goal isn’t met.</span>
+            <label htmlFor="rem-on">Send reminders</label>
           </div>
           <input id="rem-on" type="checkbox" role="switch" className="switch" checked={s.reminders.enabled} onChange={(e) => setRem({ enabled: e.target.checked })} />
         </div>
@@ -200,7 +207,7 @@ export function SettingsForm({ initial }: { initial: SettingsInput }) {
             </div>
             <div className="set-row">
               <div className="set-row-text">
-                <span>On</span>
+                <span>Remind me on</span>
               </div>
               <Days label="Reminder days" value={s.reminders.days} onChange={(d) => setRem({ days: d })} />
             </div>
@@ -228,16 +235,21 @@ export function SettingsForm({ initial }: { initial: SettingsInput }) {
             </div>
           </>
         ) : null}
+        </div>
       </section>
 
       <section className="set-section" aria-labelledby="brk-h">
-        <h2 id="brk-h" className="set-section-title">
-          Breaks
-        </h2>
+        <div className="set-section-head">
+          <h2 id="brk-h" className="set-section-title">
+            Breaks
+          </h2>
+          <p className="set-section-desc">Planned time off. Break days never count against your streak.</p>
+        </div>
+        <div className="set-card">
         <div className="set-row">
           <div className="set-row-text">
-            <span>Planned time off</span>
-            <span className="hint">Never counts against your streak.</span>
+            <span>Upcoming breaks</span>
+            {s.pauses.length === 0 ? <span className="hint">No breaks planned.</span> : null}
           </div>
           {s.pauses.length > 0 ? (
             <ul className="breaks">
@@ -254,6 +266,9 @@ export function SettingsForm({ initial }: { initial: SettingsInput }) {
         </div>
         <div className="set-row">
           <div className="break-form">
+            <span className="small muted" style={{ marginRight: 4 }}>
+              Add a break
+            </span>
             <input type="date" className="input" aria-label="Break starts" value={draft.start} onChange={(e) => setDraft({ ...draft, start: e.target.value })} />
             <span className="faint">→</span>
             <input type="date" className="input" aria-label="Break ends" min={draft.start} value={draft.end} onChange={(e) => setDraft({ ...draft, end: e.target.value })} />
@@ -266,9 +281,10 @@ export function SettingsForm({ initial }: { initial: SettingsInput }) {
                 setDraft({ start: '', end: '' });
               }}
             >
-              <IconPlus size={14} /> Add break
+              <IconPlus size={14} /> Add
             </button>
           </div>
+        </div>
         </div>
       </section>
 
@@ -280,20 +296,20 @@ export function SettingsForm({ initial }: { initial: SettingsInput }) {
 
       {dirty ? (
         <div className="savebar" role="region" aria-label="Unsaved changes">
-          <span className="small">Unsaved changes</span>
-          <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
-            <button type="button" className="btn-text small" onClick={() => setS(saved)}>
+          <span className="small muted">You have unsaved changes</span>
+          <div className="savebar-actions">
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => setS(saved)}>
               Discard
             </button>
-            <button className="btn btn-sm" type="submit" disabled={pending}>
-              {pending ? 'Saving…' : 'Save'}
+            <button className="btn btn-accent btn-sm" type="submit" disabled={pending}>
+              {pending ? 'Saving…' : 'Save changes'}
             </button>
           </div>
         </div>
       ) : null}
       {toast ? (
         <div className="toast" role="status">
-          Saved
+          <IconCheck size={15} /> Changes saved
         </div>
       ) : null}
     </form>
