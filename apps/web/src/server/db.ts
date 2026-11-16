@@ -3,6 +3,7 @@ import { mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { config } from './config';
+import { uniqueHandle } from './handles';
 
 /**
  * SQLite via Node's built-in `node:sqlite`: no extra service to run for the
@@ -13,7 +14,9 @@ import { config } from './config';
  * derived per creator time zone in the domain layer, never stored.
  */
 
-const MIGRATIONS: string[] = [
+type Migration = string | ((db: DatabaseSync) => void);
+
+const MIGRATIONS: Migration[] = [
   `
   CREATE TABLE users (
     id TEXT PRIMARY KEY,
@@ -120,6 +123,81 @@ const MIGRATIONS: string[] = [
     PRIMARY KEY (platform, update_id)
   );
   `,
+  // 2: public profiles, follows and channel stars.
+  (db) => {
+    db.exec(`
+      ALTER TABLE users ADD COLUMN handle TEXT COLLATE NOCASE;
+      ALTER TABLE users ADD COLUMN bio TEXT;
+      ALTER TABLE users ADD COLUMN profile_public INTEGER NOT NULL DEFAULT 1;
+
+      CREATE TABLE follows (
+        follower_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        followee_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        created_at TEXT NOT NULL,
+        PRIMARY KEY (follower_id, followee_id),
+        CHECK (follower_id <> followee_id)
+      );
+      CREATE INDEX follows_followee ON follows(followee_id);
+
+      CREATE TABLE channel_stars (
+        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        channel_id TEXT NOT NULL REFERENCES channels(id) ON DELETE CASCADE,
+        created_at TEXT NOT NULL,
+        PRIMARY KEY (user_id, channel_id)
+      );
+      CREATE INDEX channel_stars_channel ON channel_stars(channel_id);
+    `);
+    // Give every existing account a handle derived from its name.
+    const taken = new Set<string>();
+    const users = db.prepare('SELECT id, name FROM users ORDER BY created_at').all() as { id: string; name: string }[];
+    const set = db.prepare('UPDATE users SET handle = ? WHERE id = ?');
+    for (const u of users) {
+      const h = uniqueHandle(u.name, (c) => taken.has(c));
+      taken.add(h);
+      set.run(h, u.id);
+    }
+    db.exec('CREATE UNIQUE INDEX users_handle ON users(handle)');
+  },
+  // 3: admin roles, suspensions, last-seen and an audit log of admin actions.
+  `
+  ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'user';
+  ALTER TABLE users ADD COLUMN suspended_at TEXT;
+  ALTER TABLE users ADD COLUMN last_seen_at TEXT;
+  CREATE INDEX users_created ON users(created_at);
+
+  -- No foreign keys: the log outlives the accounts it mentions.
+  CREATE TABLE admin_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    admin_id TEXT NOT NULL,
+    admin_name TEXT NOT NULL,
+    action TEXT NOT NULL,
+    target_id TEXT,
+    target_label TEXT,
+    detail TEXT,
+    created_at TEXT NOT NULL
+  );
+  CREATE INDEX admin_log_time ON admin_log(created_at);
+  `,
+  // 4: settings managed in the admin panel (bot), and medal messages already sent.
+  `
+  CREATE TABLE app_settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );
+
+  -- One row per (user, medal, tier) we've announced. The primary key makes
+  -- each announcement happen at most once, even with concurrent updates.
+  CREATE TABLE medal_notices (
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    medal_id TEXT NOT NULL,
+    tier INTEGER NOT NULL,
+    created_at TEXT NOT NULL,
+    PRIMARY KEY (user_id, medal_id, tier)
+  );
+
+  ALTER TABLE users ADD COLUMN notify_medals INTEGER NOT NULL DEFAULT 1;
+  `,
 ];
 
 function migrate(db: DatabaseSync) {
@@ -127,7 +205,9 @@ function migrate(db: DatabaseSync) {
   for (let i = version; i < MIGRATIONS.length; i++) {
     db.exec('BEGIN');
     try {
-      db.exec(MIGRATIONS[i]!);
+      const m = MIGRATIONS[i]!;
+      if (typeof m === 'string') db.exec(m);
+      else m(db);
       db.exec(`PRAGMA user_version = ${i + 1}`);
       db.exec('COMMIT');
     } catch (e) {
@@ -139,13 +219,20 @@ function migrate(db: DatabaseSync) {
 
 const globalForDb = globalThis as unknown as { __emberlyDb?: DatabaseSync };
 
+// Reset whenever this module is (re)loaded, so a dev server that keeps the
+// connection across hot reloads still applies newly added migrations.
+let migrated = false;
+
 export function getDb(): DatabaseSync {
   if (!globalForDb.__emberlyDb) {
     mkdirSync(config.dataDir, { recursive: true });
     const db = new DatabaseSync(path.join(config.dataDir, 'emberly.db'));
     db.exec('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000;');
-    migrate(db);
     globalForDb.__emberlyDb = db;
+  }
+  if (!migrated) {
+    migrate(globalForDb.__emberlyDb);
+    migrated = true;
   }
   return globalForDb.__emberlyDb;
 }

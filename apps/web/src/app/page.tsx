@@ -1,263 +1,130 @@
 import Link from 'next/link';
 import { buildDashboard, generateDemoData } from '@emberly/core';
-import { GridPreview } from '@/components/GridPreview';
-import { IconArrow, IconCheck, IconFlame, IconHeart, IconTelegram, IconX, Logo } from '@/components/icons';
-import { MedalArt } from '@/components/MedalArt';
+import { IconArrow, Logo } from '@/components/icons';
+import { HeroChannel } from '@/components/landing/HeroChannel';
+import { NudgeChat } from '@/components/landing/NudgeChat';
+import { Reveal } from '@/components/landing/Reveal';
+import { ScrollYear } from '@/components/landing/ScrollYear';
+import { TiltCard } from '@/components/landing/TiltCard';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 // A fixed date keeps the landing page fully static.
 const SAMPLE_NOW = '2026-10-29T16:00:00Z';
 
 function sample() {
   const demo = generateDemoData(SAMPLE_NOW, 'UTC');
-  return buildDashboard({ posts: demo.posts, channels: [demo.channel], schedule: demo.schedule, now: SAMPLE_NOW });
+  const m = buildDashboard({ posts: demo.posts, channels: [demo.channel], schedule: demo.schedule, now: SAMPLE_NOW });
+  const weeks = m.grid.weeks;
+
+  // Hero: the last 13 weeks, plus an empty column that fills as posts arrive.
+  const hero = [...weeks.slice(-14, -1).flatMap((w) => w.map((c) => (c.state === 'future' ? 0 : c.level))), ...Array<number>(7).fill(0)];
+
+  // Scroll story: every day in order, with a running total and its month.
+  let total = 0;
+  const cells = weeks.flat();
+  const levels = cells.map((c) => (c.state === 'future' ? -1 : c.level));
+  const cumulative = cells.map((c) => (total += c.count));
+  const months = cells.map((c) => new Date(`${c.date}T12:00:00Z`).toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' }));
+  return { hero, levels, cumulative, months, cols: weeks.length };
 }
 
 export default function Landing() {
-  const m = sample();
+  const s = sample();
   return (
     <div className="lp">
+      <div className="lp-glow" aria-hidden />
+
       <header className="lp-nav container">
-        <Link href="/" className="brand" aria-label="Emberly home">
-          <Logo /> Emberly
+        <Link href="/" className="brand" aria-label="Tally home">
+          <Logo /> Tally
         </Link>
-        <nav className="lp-links" aria-label="Sections">
-          <a href="#features">Features</a>
-          <a href="#how">How it works</a>
-          <Link href="/demo">Demo</Link>
-        </nav>
         <div className="lp-nav-cta">
+          <ThemeToggle />
           <Link href="/sign-in" className="btn btn-ghost btn-sm">
             Sign in
           </Link>
-          <Link href="/sign-up" className="btn btn-sm">
+          <Link href="/sign-up" className="btn btn-accent btn-sm">
             Get started
           </Link>
         </div>
       </header>
 
       <main id="main">
-        {/* Hero */}
         <section className="hero container">
-          <div className="hero-glow" aria-hidden />
-          <span className="chip chip-accent hero-eyebrow rise">
-            <IconTelegram size={14} /> For Telegram creators
-          </span>
-          <h1 className="hero-title rise" style={{ animationDelay: '60ms' }}>
-            Your posting rhythm,
-            <br />
-            <span className="serif">beautifully kept.</span>
-          </h1>
-          <p className="hero-sub rise" style={{ animationDelay: '120ms' }}>
-            See every post on one calm grid. Keep streaks on your schedule. Get a gentle nudge when you need one.
-          </p>
-          <div className="hero-ctas rise" style={{ animationDelay: '180ms' }}>
-            <Link href="/sign-up" className="btn btn-accent btn-lg">
-              Start free <IconArrow size={18} />
-            </Link>
-            <Link href="/demo" className="btn btn-ghost btn-lg">
-              View live demo
-            </Link>
+          <div className="hero-copy">
+            <h1 className="hero-title">
+              <span style={{ ['--d' as string]: 0 }}>Every post</span> <span style={{ ['--d' as string]: 1 }}>becomes</span>{' '}
+              <em style={{ ['--d' as string]: 2 }}>a square.</em>
+            </h1>
+            <p className="hero-sub">Tally turns your Telegram channel into a living year.</p>
+            <div className="hero-ctas">
+              <Link href="/sign-up" className="btn btn-accent btn-lg">
+                Start free <IconArrow size={16} />
+              </Link>
+              <Link href="/demo" className="btn btn-ghost btn-lg">
+                See a demo
+              </Link>
+            </div>
           </div>
-
-          {/* Product preview */}
-          <div className="preview rise" style={{ animationDelay: '260ms' }}>
-            <div className="preview-window">
-              <div className="preview-top">
-                <div className="preview-channel">
-                  <span className="avatar">F</span>
-                  <div>
-                    <p className="preview-name">Field Notes</p>
-                    <p className="faint small">Goal · 4 posts a week</p>
-                  </div>
-                </div>
-                <span className="chip chip-mint chip-dot">Tracking</span>
-              </div>
-              <div className="preview-stats">
-                <div>
-                  <p className="label">This week</p>
-                  <p className="stat-num">
-                    {m.progress.posted}
-                    <span className="faint">/{m.progress.target}</span>
-                  </p>
-                </div>
-                <div>
-                  <p className="label">Streak</p>
-                  <p className="stat-num">
-                    {m.streaks.current}
-                    <span className="stat-unit">wks</span>
-                  </p>
-                </div>
-                <div>
-                  <p className="label">Posts</p>
-                  <p className="stat-num">{m.totals.posts}</p>
-                </div>
-                <div className="hide-sm">
-                  <p className="label">Reactions</p>
-                  <p className="stat-num">{(m.totals.reactions / 1000).toFixed(1)}k</p>
-                </div>
-              </div>
-              <GridPreview grid={m.grid} />
-            </div>
-
-            <div className="float float-a" aria-hidden>
-              <span className="float-icon">
-                <IconTelegram size={16} />
-              </span>
-              {/* <div>
-                <p className="float-title">Emberly</p>
-                <p className="small muted">You’re one post away from your weekly goal ✨</p>
-              </div> */}
-            </div>
-            <div className="float float-b" aria-hidden>
-              <MedalArt id="kept-rhythm" earned tier={2} size={40} />
-              {/* <div>
-                <p className="float-title">Kept Rhythm</p>
-                <p className="small muted">7 weeks in a row</p>
-              </div> */}
-            </div>
+          <div className="hero-visual">
+            <HeroChannel levels={s.hero} />
           </div>
         </section>
 
-        {/* Features */}
-        <section id="features" className="section container">
-          <div className="section-head">
-            <h2>
-              Consistency, <span className="serif">without the guilt.</span>
-            </h2>
-          </div>
-          <div className="bento">
-            <article className="tile tile-wide">
-              <div className="tile-copy">
-                <h3>Your rhythm, your rules</h3>
-                <p className="muted">Daily, set days, or a weekly number.</p>
-              </div>
-              <div className="viz-cadence" aria-hidden>
-                <span>Daily</span>
-                <span>Mon · Wed · Fri</span>
-                <span className="on">4 a week</span>
-              </div>
-            </article>
+        <ScrollYear levels={s.levels} cumulative={s.cumulative} months={s.months} cols={s.cols} />
 
-            <article className="tile">
-              <div className="tile-copy">
-                <h3>Breaks are built in</h3>
-                <p className="muted">Planned time off never breaks a streak.</p>
-              </div>
-              <div className="viz-break" aria-hidden>
-                <div className="viz-row">
-                  {[3, 2, 4, 0, 0, 0, 0, 2, 3, 1].map((l, i) => (
-                    <span key={i} className={i >= 3 && i <= 6 ? 'pause' : `lv${l}`} />
-                  ))}
-                </div>
-                <span className="chip chip-mint">
-                  <IconFlame size={13} /> Streak kept
+        <section className="container lp-split">
+          <Reveal className="lp-copy">
+            <h2>
+              A nudge, <em>only when you need it.</em>
+            </h2>
+            <p>One message a day at most. Never in quiet hours.</p>
+          </Reveal>
+          <NudgeChat />
+        </section>
+
+        <section className="container lp-split is-flipped">
+          <Reveal className="lp-copy">
+            <h2>
+              Your year, <em>on your page.</em>
+            </h2>
+            <p>Share it. Follow other creators. Star the channels you love.</p>
+          </Reveal>
+          <Reveal className="lp-card-wrap">
+            <TiltCard className="lp-profile">
+              <div className="lpp-top">
+                <span className="lpp-avatar">M</span>
+                <span>
+                  <strong>Maya Okafor</strong>
+                  <span>Creator since March 2023</span>
                 </span>
+                <span className="lpp-follow">Follow</span>
               </div>
-            </article>
-
-            <article className="tile">
-              <div className="tile-copy">
-                <h3>Gentle nudges</h3>
-                <p className="muted">One message, at your time. Never during quiet hours.</p>
+              <div className="lpp-grid" aria-hidden>
+                {s.hero.slice(0, 91).map((lv, i) => (
+                  <span key={i} className={`hc-cell lv${lv}`} />
+                ))}
               </div>
-              <div className="viz-msg" aria-hidden>
-                <div className="bubble">
-                  A gentle nudge: nothing posted yet today. One post keeps your rhythm going.
-                  <span className="bubble-time">18:00</span>
-                </div>
+              <div className="lpp-channels">
+                <span>Field Notes</span>
+                <span>Studio Diary</span>
+                <span>Weekend Walks</span>
               </div>
-            </article>
-
-            <article className="tile tile-wide">
-              <div className="tile-copy">
-                <h3>Medals that mean something</h3>
-                <p className="muted">Earned from real posts. Each one says why.</p>
-              </div>
-              <div className="viz-medals" aria-hidden>
-                <MedalArt id="first-spark" earned tier={1} size={60} />
-                <MedalArt id="kept-rhythm" earned tier={2} size={60} />
-                <MedalArt id="crowd-favorite" earned tier={1} size={60} />
-                <MedalArt id="welcome-back" earned={false} size={60} />
-              </div>
-            </article>
-          </div>
+            </TiltCard>
+          </Reveal>
         </section>
 
-        {/* How it works */}
-        <section id="how" className="section container">
-          <div className="section-head">
-            <h2>
-              Set up in <span className="serif">two minutes.</span>
-            </h2>
-          </div>
-          <ol className="steps">
-            <li>
-              <span className="step-n">1</span>
-              <h3>Link Telegram</h3>
-              <p className="muted">Tap Start in our bot.</p>
-            </li>
-            <li>
-              <span className="step-n">2</span>
-              <h3>Add the bot</h3>
-              <p className="muted">As a channel admin. Read-only.</p>
-            </li>
-            <li>
-              <span className="step-n">3</span>
-              <h3>Pick your rhythm</h3>
-              <p className="muted">Your goal, your reminders.</p>
-            </li>
-          </ol>
-        </section>
-
-        {/* Honest numbers */}
-        <section className="section container">
-          <div className="honest">
-            <div>
-              <h2>
-                Real numbers. <span className="serif">Only.</span>
-              </h2>
-              <p className="muted" style={{ marginTop: 10 }}>
-                We show what Telegram shares, and say so when it doesn’t.
-              </p>
-            </div>
-            <ul className="honest-list">
-              <li>
-                <IconCheck size={16} /> Every new post
-              </li>
-              <li>
-                <IconHeart size={16} /> Reactions
-              </li>
-              <li>
-                <IconCheck size={16} /> History import
-              </li>
-              <li className="off">
-                <IconX size={16} /> Views, not shared by Telegram
-              </li>
-            </ul>
-          </div>
-        </section>
-
-        {/* CTA */}
-        <section className="container">
-          <div className="cta">
-            <GridPreview grid={m.grid} weeks={30} />
-            <div className="cta-inner">
-              <h2>
-                Show up. <span className="serif">At your pace.</span>
-              </h2>
-              <div className="hero-ctas">
-                <Link href="/sign-up" className="btn btn-accent btn-lg">
-                  Create your profile
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
+        <Reveal as="section" className="container lp-end">
+          <h2>Start your year.</h2>
+          <Link href="/sign-up" className="btn btn-accent btn-lg">
+            Create your account <IconArrow size={16} />
+          </Link>
+        </Reveal>
       </main>
 
       <footer className="lp-foot container">
         <span className="brand">
-          <Logo size={20} /> Emberly
+          <Logo /> Tally
         </span>
         <span className="faint small">Not affiliated with Telegram.</span>
       </footer>

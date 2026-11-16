@@ -20,8 +20,8 @@ export function LinkTelegram({ mode, linked }: { mode: 'live' | 'development'; l
   if (mode === 'development') {
     return (
       <form action={simulateLinkAction}>
-        <button className={`btn btn-sm ${linked ? 'btn-ghost' : 'btn-accent'}`} type="submit">
-          <IconTelegram size={15} /> {linked ? 'Re-link (simulated)' : 'Simulate Start'}
+        <button className={`btn ${linked ? 'btn-ghost' : 'btn-accent'}`} type="submit">
+          <IconTelegram size={15} /> {linked ? 'Re-link (simulated)' : 'Simulate pressing Start'}
         </button>
       </form>
     );
@@ -30,7 +30,7 @@ export function LinkTelegram({ mode, linked }: { mode: 'live' | 'development'; l
   if (link) {
     return (
       <div className="stack" style={{ gap: 8 }}>
-        <a className="btn btn-accent btn-sm" href={link} target="_blank" rel="noreferrer" style={{ justifySelf: 'start' }}>
+        <a className="btn btn-accent" href={link} target="_blank" rel="noreferrer" style={{ justifySelf: 'start' }}>
           <IconTelegram size={15} /> Open Telegram
         </a>
         <p className="faint small">Press Start in the bot, then refresh this page. Link expires in 30 minutes.</p>
@@ -41,7 +41,7 @@ export function LinkTelegram({ mode, linked }: { mode: 'live' | 'development'; l
   return (
     <div className="stack" style={{ gap: 8 }}>
       <button
-        className={`btn btn-sm ${linked ? 'btn-ghost' : 'btn-accent'}`}
+        className={`btn ${linked ? 'btn-ghost' : 'btn-accent'}`}
         style={{ justifySelf: 'start' }}
         disabled={pending}
         onClick={() =>
@@ -76,7 +76,7 @@ export function VerifyChannelForm() {
           Channel username
         </label>
         <input id="channel" name="channel" className="input" placeholder="@yourchannel" autoComplete="off" />
-        <button className="btn btn-sm" type="submit" disabled={pending} style={{ height: 42 }}>
+        <button className="btn" type="submit" disabled={pending}>
           {pending ? 'Checking…' : 'Check'}
         </button>
       </form>
@@ -107,13 +107,13 @@ export function ImportForm() {
   const [name, setName] = useState<string | null>(null);
   return (
     <form action={action} className="stack" style={{ gap: 10 }}>
-      <label className="dropzone">
+      <label className={`dropzone ${name ? 'has-file' : ''}`}>
         <input name="export" type="file" accept="application/json,.json" className="sr-only" onChange={(e) => setName(e.target.files?.[0]?.name ?? null)} />
-        <IconUpload size={20} />
+        <IconUpload size={18} />
         <span>{name ?? 'Choose result.json'}</span>
       </label>
-      <button className="btn btn-sm" type="submit" disabled={pending || !name}>
-        {pending ? 'Importing…' : 'Import'}
+      <button className="btn" type="submit" disabled={pending || !name}>
+        {pending ? 'Importing…' : 'Import posts'}
       </button>
       {state.message ? (
         <p className="banner banner-mint" role="status">
@@ -134,12 +134,12 @@ export function RemoveChannelButton({ channelId, title }: { channelId: string; t
     <form
       action={removeChannelAction}
       onSubmit={(e) => {
-        if (!confirm(`Remove ${title} and its recorded posts from Emberly? This can’t be undone.`)) e.preventDefault();
+        if (!confirm(`Remove ${title} and its recorded posts from Tally? This can’t be undone.`)) e.preventDefault();
       }}
     >
       <input type="hidden" name="channelId" value={channelId} />
-      <button className="btn-text small" type="submit" style={{ color: 'var(--ink-3)' }}>
-        Remove
+      <button className="btn-text btn-quiet small" type="submit">
+        Remove channel
       </button>
     </form>
   );

@@ -23,10 +23,10 @@ async function Medals() {
     <>
       <div className="page-head rise">
         <div>
-          <p className="eyebrow">
-            {earned} of {dashboard.medals.length} earned
-          </p>
           <h1>Medals</h1>
+          <p className="page-head-desc">
+            {earned ? `${earned} earned. ` : ''}Earned from real reactions and stars. Higher tiers change the metal and add ×2, ×3, ×4.
+          </p>
         </div>
       </div>
       <MedalCards medals={dashboard.medals} />

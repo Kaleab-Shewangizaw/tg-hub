@@ -4,17 +4,18 @@ import { Suspense } from 'react';
 import { formatLongDate, zonedParts } from '@emberly/core';
 import { ChannelStatusChip } from '@/components/ChannelStatus';
 import { DashboardView } from '@/components/Dashboard';
-import { IconArrow, IconTelegram } from '@/components/icons';
+import { IconArrow, IconInfo, IconTelegram } from '@/components/icons';
 import { DashboardSkeleton } from '@/components/Skeletons';
+import { parseYear } from '@/components/YearList';
 import { requireUser } from '@/server/auth';
 import { loadDashboard } from '@/server/dashboard';
 
 export const metadata: Metadata = { title: 'Overview' };
 
-export default function OverviewPage() {
+export default function OverviewPage({ searchParams }: PageProps<'/app'>) {
   return (
     <Suspense fallback={<DashboardSkeleton />}>
-      <Overview />
+      <Overview searchParams={searchParams} />
     </Suspense>
   );
 }
@@ -26,9 +27,10 @@ function greeting(minutes: number) {
   return 'Good evening';
 }
 
-async function Overview() {
+async function Overview({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const user = await requireUser();
-  const data = loadDashboard(user);
+  const { year } = await searchParams;
+  const data = loadDashboard(user, new Date(), parseYear(year));
   const { channels, dashboard } = data;
   const first = user.name.split(' ')[0];
   const { minutes } = zonedParts(new Date(), user.settings.timeZone);
@@ -37,16 +39,16 @@ async function Overview() {
     return (
       <div className="onboard rise">
         <span className="onboard-icon">
-          <IconTelegram size={26} />
+          <IconTelegram size={22} />
         </span>
         <h1>Welcome, {first}</h1>
-        <p className="muted">Connect a Telegram channel to start your activity map.</p>
+        <p className="muted">Connect your Telegram channel and Tally will start mapping your posts. It takes about two minutes.</p>
         <div className="onboard-ctas">
           <Link href="/app/channels" className="btn btn-accent btn-lg">
-            Connect a channel <IconArrow size={18} />
+            Connect a channel <IconArrow size={16} />
           </Link>
           <Link href="/demo" className="btn btn-ghost btn-lg">
-            See a demo
+            Explore the demo
           </Link>
         </div>
       </div>
@@ -70,20 +72,24 @@ async function Overview() {
               Simulated
             </Link>
           ) : null}
+          <Link href={`/u/${user.handle}`} className="chip">
+            View public profile
+          </Link>
           {channels.length === 1 ? (
             <Link href="/app/channels">
               <ChannelStatusChip status={channels[0]!.status} />
             </Link>
           ) : null}
-          <Link href="/app/settings" className="chip">
+          <Link href="/app/settings" className="chip" title="Change your goal">
             {dashboard.goalLabel}
           </Link>
         </div>
       </div>
 
       {attention ? (
-        <p className="banner banner-amber">
-          {attention.title} needs a quick look. <Link href="/app/channels">Check setup</Link>
+        <p className="banner banner-amber" role="status">
+          <IconInfo size={16} /> {attention.title} needs a quick look before it can track posts.
+          <Link href="/app/channels">Check setup</Link>
         </p>
       ) : null}
 

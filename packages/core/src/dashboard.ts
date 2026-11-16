@@ -38,6 +38,8 @@ export interface DashboardModel {
   progress: GoalProgress & { headline: string; detail: string };
   streaks: Omit<StreakSummary, 'timeline'> & { message: string };
   grid: ActivityGrid;
+  /** Years with tracked activity, newest first (always includes the current year). */
+  years: number[];
   /** Weekly cadences: goal status per week, keyed by week start date. */
   weekGoals: Record<ISODate, { status: PeriodStatus; posted: number; target: number }> | null;
   medals: MedalAward[];
@@ -53,6 +55,10 @@ export function buildDashboard(input: {
   schedule: Schedule;
   now: Instant;
   recentLimit?: number;
+  /** When each star on the creator's channels was given, for the Starstruck medal. */
+  stars?: string[];
+  /** Calendar year for the grid; omitted or current year → rolling last 53 weeks. */
+  year?: number | null;
 }): DashboardModel {
   const { posts, schedule } = input;
   const tz = schedule.timeZone;
@@ -66,11 +72,17 @@ export function buildDashboard(input: {
   const progress = currentProgress({ schedule, counts, today, trackingStart });
   const { timeline: _timeline, ...streakSummary } = streaks;
 
-  const grid = buildActivityGrid({ counts, schedule, today, trackingStart });
+  const currentYear = Number(today.slice(0, 4));
+  let firstYear = Number(trackingStart.slice(0, 4));
+  for (const d of counts.keys()) firstYear = Math.min(firstYear, Number(d.slice(0, 4)));
+  const years = Array.from({ length: Math.max(1, currentYear - firstYear + 1) }, (_, i) => currentYear - i);
+  const year = input.year != null && years.includes(input.year) && input.year !== currentYear ? input.year : null;
+
+  const grid = buildActivityGrid({ counts, schedule, today, trackingStart, year });
   const dayPosts: Record<ISODate, DayPost[]> = {};
   for (const p of posts) {
     const { date, minutes } = zonedParts(p.publishedAt, tz);
-    if (date < grid.range.start) continue;
+    if (date < grid.range.start || date > grid.range.end) continue;
     (dayPosts[date] ??= []).push({
       id: p.id,
       time: `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`,
@@ -89,11 +101,12 @@ export function buildDashboard(input: {
     progress: { ...progress, headline: progressHeadline(progress), detail: progressDetail(progress) },
     streaks: { ...streakSummary, message: streakMessage(streaks) },
     grid,
+    years,
     weekGoals:
       schedule.cadence.kind === 'weekly'
         ? Object.fromEntries(periods.map((p) => [p.start, { status: p.status, posted: p.posted, target: p.target }]))
         : null,
-    medals: evaluateMedals({ posts, timeZone: tz, streaks }),
+    medals: evaluateMedals({ posts, timeZone: tz, stars: input.stars }),
     dayPosts,
     recentPosts: [...posts].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt)).slice(0, input.recentLimit ?? 12),
     totals: {

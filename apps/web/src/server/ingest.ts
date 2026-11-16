@@ -68,7 +68,7 @@ export function applyInboundEvents(platform: PlatformId, events: InboundEvent[],
           if (!userId) {
             result.replies.push({
               externalUserId: e.externalUserId,
-              text: 'That link has expired or was already used. Open Emberly → Channels and tap “Link Telegram” to get a fresh one.',
+              text: 'That link has expired or was already used. Open Tally → Channels and tap “Link Telegram” to get a fresh one.',
             });
             break;
           }
@@ -78,7 +78,7 @@ export function applyInboundEvents(platform: PlatformId, events: InboundEvent[],
           result.replies.push({
             externalUserId: e.externalUserId,
             text:
-              'You’re linked to Emberly. 🌱\n\n' +
+              'You’re linked to Tally. 🌱\n\n' +
               (claimed > 0
                 ? `We found ${claimed === 1 ? 'a channel' : `${claimed} channels`} you added the bot to, and tracking is on.`
                 : 'Next, add this bot to your channel as an administrator. It doesn’t need permission to post, edit or delete anything.') +

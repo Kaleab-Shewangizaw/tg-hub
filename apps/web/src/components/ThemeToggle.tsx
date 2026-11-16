@@ -3,13 +3,13 @@
 import { useEffect, useState } from 'react';
 import { IconMoon, IconSun } from './icons';
 
-/** Toggles light/dark. Starts from the system preference until the user chooses. */
+/** Toggles light/dark. The app is dark unless the visitor picks light. */
 export function ThemeToggle() {
   const [dark, setDark] = useState<boolean | null>(null);
 
   useEffect(() => {
     const explicit = document.documentElement.dataset.theme;
-    setDark(explicit ? explicit === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches);
+    setDark(explicit !== 'light');
   }, []);
 
   const toggle = () => {

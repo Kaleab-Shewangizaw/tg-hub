@@ -1,4 +1,4 @@
-/** Original line icons for Emberly. 24px grid, 1.75 stroke, currentColor. */
+/** Original line icons for Tally. 24px grid, 1.75 stroke, currentColor. */
 
 type P = { size?: number; className?: string; title?: string };
 
@@ -23,15 +23,13 @@ function Svg({ size = 20, className, title, children }: P & { children: React.Re
   );
 }
 
-/** The Emberly mark: a tiny activity grid with one day lit. */
-export function Logo({ size = 26 }: { size?: number }) {
+/** The Tally mark: a tiny activity grid with one day lit. */
+/** A blue tile with a small ember in the corner. */
+export function Logo({ size = 22 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 28 28" aria-hidden>
-      <rect width="28" height="28" rx="8" fill="var(--ink)" />
-      <rect x="6" y="6" width="7" height="7" rx="2.2" fill="var(--bg)" opacity="0.35" />
-      <rect x="15" y="6" width="7" height="7" rx="2.2" fill="var(--bg)" opacity="0.6" />
-      <rect x="6" y="15" width="7" height="7" rx="2.2" fill="var(--bg)" opacity="0.6" />
-      <rect x="15" y="15" width="7" height="7" rx="2.2" fill="var(--accent)" />
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden>
+      <rect width="24" height="24" rx="6" fill="#3b82f6" />
+      <rect x="12.5" y="12.5" width="6" height="6" rx="1.6" fill="#ffffff" />
     </svg>
   );
 }
@@ -168,5 +166,44 @@ export const IconFlask = (p: P) => (
 export const IconLogout = (p: P) => (
   <Svg {...p}>
     <path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 16l-4-4 4-4M6 12h10" />
+  </Svg>
+);
+export const IconStar = ({ filled, ...p }: P & { filled?: boolean }) => (
+  <Svg {...p}>
+    <path
+      d="m12 3.8 2.5 5.1 5.6.8-4 3.9 1 5.6-5.1-2.6-5 2.6.9-5.6-4-3.9 5.6-.8L12 3.8Z"
+      fill={filled ? 'currentColor' : 'none'}
+    />
+  </Svg>
+);
+export const IconUsers = (p: P) => (
+  <Svg {...p}>
+    <circle cx="9" cy="8.5" r="3.2" />
+    <path d="M3.5 19c.6-3 2.8-4.8 5.5-4.8s4.9 1.8 5.5 4.8" />
+    <path d="M15.5 5.6a3.2 3.2 0 0 1 0 6M17.5 14.6c1.6.6 2.7 2.1 3 4.4" />
+  </Svg>
+);
+export const IconCompass = (p: P) => (
+  <Svg {...p}>
+    <circle cx="12" cy="12" r="8.5" />
+    <path d="m15.2 8.8-1.9 4.5-4.5 1.9 1.9-4.5 4.5-1.9Z" />
+  </Svg>
+);
+export const IconUser = (p: P) => (
+  <Svg {...p}>
+    <circle cx="12" cy="8.5" r="3.5" />
+    <path d="M5 19.5c.8-3.4 3.6-5.3 7-5.3s6.2 1.9 7 5.3" />
+  </Svg>
+);
+export const IconCalendar = (p: P) => (
+  <Svg {...p}>
+    <rect x="4" y="5.5" width="16" height="14" rx="2.5" />
+    <path d="M4 10h16M8.5 3.5v4M15.5 3.5v4" />
+  </Svg>
+);
+export const IconLock = (p: P) => (
+  <Svg {...p}>
+    <rect x="5" y="10.5" width="14" height="9.5" rx="2.5" />
+    <path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5" />
   </Svg>
 );

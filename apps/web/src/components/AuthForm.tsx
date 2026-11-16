@@ -41,7 +41,10 @@ export function AuthForm({ mode, action }: Props) {
 
   return (
     <>
-      <h1>{up ? 'Create your profile' : 'Welcome back'}</h1>
+      <div className="auth-head">
+        <h1>{up ? 'Create your account' : 'Welcome back'}</h1>
+        <p>{up ? 'Start tracking your posting rhythm in minutes.' : 'Sign in to see your posting rhythm.'}</p>
+      </div>
       <form action={formAction} className="auth-form" noValidate>
         {state.error && !Object.keys(fe).length ? (
           <p className="alert" role="alert">
@@ -53,17 +56,17 @@ export function AuthForm({ mode, action }: Props) {
         {field('password', 'Password', 'password', up ? 'new-password' : 'current-password', up ? 'At least 10 characters' : undefined)}
         {up ? <input type="hidden" name="timeZone" value={tz} /> : null}
         <button className="btn btn-accent btn-lg" type="submit" disabled={pending}>
-          {pending ? 'One moment…' : up ? 'Create profile' : 'Sign in'}
+          {pending ? 'One moment…' : up ? 'Create account' : 'Sign in'}
         </button>
       </form>
       <p className="auth-alt">
         {up ? (
           <>
-            Have an account? <Link href="/sign-in">Sign in</Link>
+            Already have an account? <Link href="/sign-in">Sign in</Link>
           </>
         ) : (
           <>
-            New here? <Link href="/sign-up">Create a profile</Link>
+            New to Tally? <Link href="/sign-up">Create an account</Link>
           </>
         )}
       </p>

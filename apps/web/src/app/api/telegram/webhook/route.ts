@@ -1,6 +1,6 @@
 import { timingSafeEqual } from 'node:crypto';
 import type { TgUpdate } from '@emberly/telegram';
-import { config } from '@/server/config';
+import { botSettings } from '@/server/botSettings';
 import { handleTelegramUpdate } from '@/server/telegram';
 
 /**
@@ -8,7 +8,7 @@ import { handleTelegramUpdate } from '@/server/telegram';
  * registered with setWebhook, sent back in X-Telegram-Bot-Api-Secret-Token.
  */
 function secretMatches(received: string | null): boolean {
-  const expected = config.telegram.webhookSecret;
+  const expected = botSettings().webhookSecret;
   if (!expected || !received) return false;
   const a = Buffer.from(received);
   const b = Buffer.from(expected);
@@ -16,7 +16,8 @@ function secretMatches(received: string | null): boolean {
 }
 
 export async function POST(request: Request) {
-  if (!config.telegram.botToken || !config.telegram.webhookSecret) {
+  const bot = botSettings();
+  if (!bot.botToken || !bot.webhookSecret) {
     return Response.json({ error: 'Telegram is not configured on this server.' }, { status: 503 });
   }
   if (!secretMatches(request.headers.get('x-telegram-bot-api-secret-token'))) {

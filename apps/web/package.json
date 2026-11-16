@@ -11,6 +11,7 @@
     "telegram:poll": "node scripts/telegram-poll.mjs",
     "telegram:set-webhook": "node scripts/set-webhook.mjs",
     "reminders:run": "node scripts/run-reminders.mjs",
+    "admin:grant": "node scripts/grant-admin.mjs",
     "test": "vitest run"
   },
   "dependencies": {

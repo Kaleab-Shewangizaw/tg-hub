@@ -68,6 +68,23 @@ describe('parseUpdate', () => {
 });
 
 describe('parseTelegramExport', () => {
+  it('reads the format written by scripts/telegram-history.py', () => {
+    const result = parseTelegramExport({
+      name: 'Durov',
+      type: 'public_channel',
+      id: 1006503122,
+      messages: [
+        { id: 1, type: 'message', date: '2024-01-02T10:00:00', date_unixtime: '1704189600', text: 'Hello', reactions: [{ type: 'emoji', emoji: '👍', count: 5 }, { type: 'custom_emoji', count: 2 }, { type: 'paid', count: 1 }] },
+        { id: 2, type: 'message', date: '2024-01-03T10:00:00', date_unixtime: '1704276000', text: '', photo: '(photo)' },
+        { id: 3, type: 'message', date: '2024-01-04T10:00:00', date_unixtime: '1704362400', text: 'Vote', poll: { question: 'Which?' } },
+      ],
+    });
+    expect(result.channel.externalId).toBe('-1001006503122');
+    expect(result.posts.map((p) => p.kind)).toEqual(['text', 'photo', 'poll']);
+    expect(result.posts[0]?.metrics?.reactions?.value).toBe(8);
+    expect(result.posts[1]!.metrics).toEqual({});
+  });
+
   it('imports messages, skips service entries, keeps reactions only when present', () => {
     const result = parseTelegramExport({
       name: 'Field Notes',

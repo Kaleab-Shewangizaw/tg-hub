@@ -2,7 +2,9 @@ import 'server-only';
 import { createHash, randomBytes, scrypt as scryptCb, timingSafeEqual } from 'node:crypto';
 import { promisify } from 'node:util';
 import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
+import { connection } from 'next/server';
+import { config } from './config';
 import { deleteSession, findSessionUser, insertSession, type UserRecord } from './repo';
 
 /**
@@ -63,8 +65,13 @@ export async function endWebSession() {
   jar.delete(SESSION_COOKIE);
 }
 
-/** Current user from the session cookie, or null. Reads the request. */
+/**
+ * Current user from the session cookie, or null. Reads the request, and
+ * marks the render as request-time: session expiry and everything shown to a
+ * signed-in user ("today", streaks) depend on the current time.
+ */
 export async function currentUser(): Promise<UserRecord | null> {
+  await connection();
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
   return token ? findSessionUser(sha256(token)) : null;
 }
@@ -73,6 +80,18 @@ export async function currentUser(): Promise<UserRecord | null> {
 export async function requireUser(): Promise<UserRecord> {
   const user = await currentUser();
   if (!user) redirect('/sign-in');
+  return user;
+}
+
+/** Admins are users with the admin role, plus anyone listed in ADMIN_EMAILS. */
+export function isAdmin(user: Pick<UserRecord, 'role' | 'email'> | null): boolean {
+  return !!user && (user.role === 'admin' || config.adminEmails.has(user.email.toLowerCase()));
+}
+
+/** For admin pages and actions. Non-admins get a 404, so the area stays invisible. */
+export async function requireAdmin(): Promise<UserRecord> {
+  const user = await requireUser();
+  if (!isAdmin(user)) notFound();
   return user;
 }
 
