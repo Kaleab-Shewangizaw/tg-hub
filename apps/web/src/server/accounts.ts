@@ -37,5 +37,7 @@ export async function signIn(input: { email: unknown; password: unknown }): Prom
   if (!(await verifyPassword(parsed.data.password, creds.passwordHash))) {
     return { ok: false, error: 'That email and password don’t match an account.' };
   }
+  // Only revealed after the password checks out.
+  if (creds.suspended) return { ok: false, error: 'This account is suspended. Contact support if you think this is a mistake.' };
   return { ok: true, user: repo.getUser(creds.id)! };
 }

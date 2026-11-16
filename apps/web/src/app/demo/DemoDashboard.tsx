@@ -9,13 +9,14 @@ import { DashboardSkeleton } from '@/components/Skeletons';
 /** Runs entirely in the browser, in the visitor's own time zone. */
 export function DemoDashboard() {
   const [model, setModel] = useState<DashboardModel | null>(null);
+  const [year, setYear] = useState<number | null>(null);
 
   useEffect(() => {
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
     const now = new Date();
     const demo = generateDemoData(now, tz);
-    setModel(buildDashboard({ posts: demo.posts, channels: [demo.channel], schedule: demo.schedule, now }));
-  }, []);
+    setModel(buildDashboard({ posts: demo.posts, channels: [demo.channel], schedule: demo.schedule, now, year }));
+  }, [year]);
 
   if (!model) return <DashboardSkeleton />;
 
@@ -31,7 +32,7 @@ export function DemoDashboard() {
           <span className="chip">{model.goalLabel}</span>
         </div>
       </div>
-      <DashboardView model={model} capabilities={TELEGRAM_CAPABILITIES} basePath={null} />
+      <DashboardView model={model} capabilities={TELEGRAM_CAPABILITIES} basePath={null} onYear={setYear} />
     </>
   );
 }

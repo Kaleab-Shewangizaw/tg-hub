@@ -1,20 +1,21 @@
 import 'server-only';
 import type { PlatformId, PlatformProvider, ProviderCapabilities } from '@emberly/core';
 import { createTelegramProvider, TELEGRAM_CAPABILITIES } from '@emberly/telegram';
-import { config } from './config';
+import { botSettings } from './botSettings';
 
 /**
  * Provider registry. Adding X later means: implement `PlatformProvider` in
  * `packages/x`, register it here, and add a sync job that calls `syncPosts`.
  */
 
-let telegram: ReturnType<typeof createTelegramProvider> | null = null;
+let telegram: { token: string; provider: ReturnType<typeof createTelegramProvider> } | null = null;
 
-/** The live Telegram provider, or null in development mode (no token). */
+/** The live Telegram provider, or null in development mode (no token). Rebuilt when the token changes. */
 export function telegramProvider() {
-  if (!config.telegram.botToken) return null;
-  telegram ??= createTelegramProvider({ token: config.telegram.botToken });
-  return telegram;
+  const token = botSettings().botToken;
+  if (!token) return null;
+  if (telegram?.token !== token) telegram = { token, provider: createTelegramProvider({ token }) };
+  return telegram.provider;
 }
 
 export function providerFor(platform: PlatformId): PlatformProvider | null {
@@ -28,7 +29,8 @@ export function capabilitiesFor(platform: PlatformId): ProviderCapabilities {
 
 /** The bot's @username: from env, or looked up once via getMe. */
 export async function telegramBotUsername(): Promise<string | null> {
-  if (config.telegram.botUsername) return config.telegram.botUsername;
+  const saved = botSettings().botUsername;
+  if (saved) return saved;
   const p = telegramProvider();
   if (!p) return null;
   try {

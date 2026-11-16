@@ -10,3 +10,7 @@ apps/web/data/
 ios/
 android/
 .env
+
+# Telethon login sessions from scripts/telegram-history.py (grant full account access)
+*.session
+*.session-journal

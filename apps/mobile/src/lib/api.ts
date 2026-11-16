@@ -25,7 +25,7 @@ async function request<T>(path: string, init: RequestInit & { token?: string | n
       headers: { 'content-type': 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}) },
     });
   } catch {
-    throw new ApiError(`Can’t reach Emberly at ${API_URL}. Check your connection.`, 0);
+    throw new ApiError(`Can’t reach Tally at ${API_URL}. Check your connection.`, 0);
   }
   const body = (await res.json().catch(() => null)) as (T & { error?: string }) | null;
   if (!res.ok) throw new ApiError(body?.error ?? `Request failed (${res.status})`, res.status);

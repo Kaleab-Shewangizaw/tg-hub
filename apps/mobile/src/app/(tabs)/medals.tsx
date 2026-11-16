@@ -19,17 +19,22 @@ export default function Medals() {
         <Txt tone="display" accessibilityRole="header">
           Medals
         </Txt>
-        <Txt tone="muted">Worked out from posts we’ve recorded, each with a rule you can read. Nothing is estimated.</Txt>
-        {state.data.dashboard.medals.map((m) => (
+        <Txt tone="muted">Earned from real reactions and stars. Higher tiers change the metal and add ×2, ×3, ×4.</Txt>
+        {state.data.dashboard.medals.filter((m) => m.earned).length === 0 ? (
+          <Card>
+            <Txt tone="small">No medals yet. Your first comes at 100 reactions on a single post.</Txt>
+          </Card>
+        ) : null}
+        {state.data.dashboard.medals.filter((m) => m.earned).map((m) => (
           <Card key={m.id} accessible accessibilityLabel={`${m.name}. ${m.earned ? `Earned ${m.earnedOn}. ${m.because}` : 'Not yet earned.'} ${m.rule}`}>
             <View style={{ flexDirection: 'row', gap: 14, alignItems: 'center' }}>
-              <MedalBadge id={m.id} earned={m.earned} />
+              <MedalBadge mark={m.mark} tier={m.tier} />
               <View style={{ flex: 1 }}>
                 <Txt tone="title">
                   {m.name}
-                  {m.tierCount > 1 && m.earned ? <Txt tone="small"> · tier {m.tier} of {m.tierCount}</Txt> : null}
+                  {m.tier > 1 ? <Txt tone="small"> ×{m.tier}</Txt> : null}
                 </Txt>
-                <Txt tone="small">{m.earned && m.earnedOn ? `Earned ${formatShortDate(m.earnedOn)}` : 'Not yet earned'}</Txt>
+                <Txt tone="small">{m.earnedOn ? `Earned ${formatShortDate(m.earnedOn)}` : 'Earned'}</Txt>
               </View>
             </View>
             <Txt tone="small">{m.rule}</Txt>

@@ -1,8 +1,7 @@
-import Link from 'next/link';
 import { formatShortDate, type Channel, type DashboardModel, type MetricKey, type Post, type ProviderCapabilities } from '@emberly/core';
 import { ActivityGrid, kindLabel } from './ActivityGrid';
-import { IconChevron, IconFlame, IconHeart, IconInfo, IconLeaf, IconPause } from './icons';
-import { MedalArt } from './MedalArt';
+import { IconFlame, IconHeart, IconInfo, IconLeaf, IconPause } from './icons';
+import { YearList } from './YearList';
 
 /**
  * Dashboard body. Pure presentation (no data access), shared by the signed-in
@@ -13,9 +12,11 @@ export interface DashboardViewProps {
   capabilities: ProviderCapabilities;
   /** Link prefix for "view all" links; demo passes null. */
   basePath: string | null;
+  /** Client-only year switching (demo); server pages use ?year= links on basePath. */
+  onYear?: (year: number | null) => void;
 }
 
-export function DashboardView({ model, capabilities, basePath }: DashboardViewProps) {
+export function DashboardView({ model, capabilities, basePath, onYear }: DashboardViewProps) {
   return (
     <div className="dash">
       <GoalTile model={model} />
@@ -27,17 +28,23 @@ export function DashboardView({ model, capabilities, basePath }: DashboardViewPr
           <h2 className="panel-title" id="activity-title">
             Activity
           </h2>
-          <p className="panel-sub">
-            {model.grid.totals.posts} posts since {formatShortDate(model.trackingStart)}
-          </p>
+          <p className="panel-sub">{activitySummary(model)}</p>
         </div>
-        <ActivityGrid grid={model.grid} dayPosts={model.dayPosts} weekGoals={model.weekGoals} today={model.today} />
+        <div className="ag-with-years">
+          <ActivityGrid key={model.grid.range.start} grid={model.grid} dayPosts={model.dayPosts} weekGoals={model.weekGoals} today={model.today} />
+          <YearList years={model.years} active={model.grid.year} href={basePath ?? undefined} onSelect={onYear} />
+        </div>
       </section>
 
       <RecentPosts posts={model.recentPosts} capabilities={capabilities} />
-      <MedalsPanel model={model} basePath={basePath} />
     </div>
   );
+}
+
+export function activitySummary(model: Pick<DashboardModel, 'grid' | 'trackingStart'>) {
+  const n = model.grid.totals.posts;
+  const posts = `${n.toLocaleString('en-US')} post${n === 1 ? '' : 's'}`;
+  return model.grid.year ? `${posts} in ${model.grid.year}` : `${posts} in the last year`;
 }
 
 const GOAL_STATE: Record<DashboardModel['progress']['state'], { label: string; tone: string } | null> = {
@@ -70,7 +77,7 @@ function GoalTile({ model }: { model: DashboardModel }) {
         </p>
       ) : (
         <div className="goal-progress">
-          <Meter value={p.posted} max={p.target} label="Goal progress" />
+          {p.target <= 10 ? <Slots value={p.posted} max={p.target} /> : <Meter value={p.posted} max={p.target} label="Goal progress" />}
           <p className="goal-sub">
             <span>
               <span className="goal-count">{p.posted}</span> of {p.target} posts
@@ -87,7 +94,7 @@ function StreakTile({ model }: { model: DashboardModel }) {
   const s = model.streaks;
   const unit = s.unit === 'week' ? (s.current === 1 ? 'week' : 'weeks') : s.current === 1 ? 'day' : 'days';
   return (
-    <section className="tile-stat" aria-label={`Current streak ${s.current} ${unit}, best ${s.best}`}>
+    <section className={`tile-stat ${s.current > 0 ? 'is-hot' : ''}`} aria-label={`Current streak ${s.current} ${unit}, best ${s.best}`}>
       <p className="tile-label">
         <IconFlame size={15} /> Streak
       </p>
@@ -155,7 +162,7 @@ function ago(iso: string): string {
 
 function RecentPosts({ posts, capabilities }: { posts: Post[]; capabilities: ProviderCapabilities }) {
   return (
-    <section className="panel dash-posts" aria-labelledby="posts-title">
+    <section className="panel dash-wide" aria-labelledby="posts-title">
       <div className="panel-head">
         <h2 id="posts-title" className="panel-title">
           Recent posts
@@ -213,42 +220,14 @@ function RecentPosts({ posts, capabilities }: { posts: Post[]; capabilities: Pro
   );
 }
 
-function MedalsPanel({ model, basePath }: { model: DashboardModel; basePath: string | null }) {
-  const next = model.medals.find((m) => !m.earned && m.next) ?? model.medals.find((m) => m.next);
+/** One slot per post in the goal; filled slots are posts already made. */
+function Slots({ value, max }: { value: number; max: number }) {
   return (
-    <section className="panel dash-medals" aria-labelledby="medals-title">
-      <div className="panel-head">
-        <h2 id="medals-title" className="panel-title">
-          Medals
-        </h2>
-        {basePath ? (
-          <Link href={`${basePath}/medals`} className="link-arrow">
-            View all <IconChevron size={14} />
-          </Link>
-        ) : null}
-      </div>
-      <ul className="medal-row">
-        {model.medals.map((m) => (
-          <li key={m.id} className={m.earned ? '' : 'is-locked'} title={m.because ?? m.rule}>
-            <MedalArt id={m.id} earned={m.earned} tier={m.tier} size={52} />
-            <span className="medal-cap">{m.name}</span>
-          </li>
-        ))}
-      </ul>
-      {next?.next ? (
-        <div className="next-medal">
-          <div className="next-medal-top">
-            <span className="small">
-              <span className="faint">Up next:</span> {next.next.label}
-            </span>
-            <span className="faint small">
-              {Math.min(next.next.current, next.next.target)}/{next.next.target}
-            </span>
-          </div>
-          <Meter value={next.next.current} max={next.next.target} label={`Progress toward ${next.next.label}`} />
-        </div>
-      ) : null}
-    </section>
+    <div className="slots" role="progressbar" aria-label="Goal progress" aria-valuemin={0} aria-valuemax={max} aria-valuenow={Math.min(value, max)}>
+      {Array.from({ length: max }, (_, i) => (
+        <span key={i} className={i < value ? 'on' : ''} style={{ animationDelay: `${i * 60}ms` }} />
+      ))}
+    </div>
   );
 }
 

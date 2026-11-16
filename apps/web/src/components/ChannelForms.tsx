@@ -134,7 +134,7 @@ export function RemoveChannelButton({ channelId, title }: { channelId: string; t
     <form
       action={removeChannelAction}
       onSubmit={(e) => {
-        if (!confirm(`Remove ${title} and its recorded posts from Emberly? This can’t be undone.`)) e.preventDefault();
+        if (!confirm(`Remove ${title} and its recorded posts from Tally? This can’t be undone.`)) e.preventDefault();
       }}
     >
       <input type="hidden" name="channelId" value={channelId} />

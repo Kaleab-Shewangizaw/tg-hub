@@ -11,8 +11,10 @@ import {
   type TgUpdate,
 } from '@emberly/telegram';
 import { randomToken, sha256 } from './auth';
-import { telegramMode } from './config';
+import { telegramMode } from './botSettings';
 import { applyInboundEvents, type IngestResult } from './ingest';
+import { checkMedalsSafely } from './notify';
+import { botReply } from './botCommands';
 import { telegramBotUsername, telegramProvider } from './platforms';
 import * as repo from './repo';
 
@@ -24,11 +26,20 @@ const LINK_TOKEN_MINUTES = 30;
 export async function handleTelegramUpdate(update: TgUpdate, source: 'live' | 'simulated' = 'live'): Promise<IngestResult | null> {
   if (typeof update?.update_id !== 'number') return null;
   if (source === 'live' && !repo.markUpdateProcessed('telegram', String(update.update_id))) return null;
-  const result = applyInboundEvents('telegram', parseUpdate(update), source);
+  const events = parseUpdate(update);
+  const result = applyInboundEvents('telegram', events, source);
   const provider = telegramProvider();
   for (const reply of result.replies) {
     if (source === 'live' && provider) await provider.sendReminder!({ recipientExternalUserId: reply.externalUserId, text: reply.text });
   }
+  // New posts and reaction counts can earn medals: tell the channel owners.
+  const touched = events.flatMap((e) =>
+    e.type === 'post_published' || e.type === 'post_edited' ? [e.channel.externalId] : e.type === 'metrics_updated' ? [e.channelExternalId] : [],
+  );
+  if (touched.length) await checkMedalsSafely(repo.ownersOfChannels('telegram', [...new Set(touched)]));
+  // Direct messages to the bot (/start, /status, /help, anything else).
+  const answer = botReply(update);
+  if (answer && source === 'live' && provider) await provider.sendReminder!({ recipientExternalUserId: String(answer.chatId), text: answer.text });
   return result;
 }
 
@@ -57,7 +68,7 @@ export async function verifyTelegramChannel(user: repo.UserRecord, channelRef: s
   if (result.channel && (result.ok || result.status !== 'pending')) {
     const existing = repo.findChannel('telegram', result.channel.externalId);
     if (existing?.userId && existing.userId !== user.id) {
-      return { ok: false, status: 'pending', checks: [...result.checks, { label: 'Channel is not connected to another Emberly account', passed: false, help: 'Ask the person who connected it to disconnect it first.' }] };
+      return { ok: false, status: 'pending', checks: [...result.checks, { label: 'Channel is not connected to another Tally account', passed: false, help: 'Ask the person who connected it to disconnect it first.' }] };
     }
     if (result.ok) {
       repo.upsertChannel({ platform: 'telegram', ...result.channel, status: 'active', statusDetail: null, source: 'live', userId: user.id });
@@ -69,7 +80,13 @@ export async function verifyTelegramChannel(user: repo.UserRecord, channelRef: s
 export function importTelegramExport(user: repo.UserRecord, json: unknown): { channelTitle: string; added: number; updated: number; skipped: number } {
   const parsed = parseTelegramExport(json);
   const existing = repo.findChannel('telegram', parsed.channel.externalId);
-  if (existing?.userId && existing.userId !== user.id) throw new Error('This channel is connected to another Emberly account.');
+  if (existing?.userId && existing.userId !== user.id) throw new Error('This channel is connected to another Tally account.');
+  // Anyone can export a public channel's history, so a file proves nothing about
+  // ownership. With a live bot, history only goes into a channel this account has
+  // already verified (bot added as admin + getChatMember confirms you're an admin).
+  if (telegramMode() === 'live' && !(existing?.userId === user.id && existing.source === 'live')) {
+    throw new Error(`Connect and verify “${parsed.channel.title}” first (add the bot as an admin, then press Verify). After that, import its history here.`);
+  }
   const channel =
     existing && existing.userId === user.id
       ? existing

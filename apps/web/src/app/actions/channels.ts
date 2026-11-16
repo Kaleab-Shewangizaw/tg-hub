@@ -1,5 +1,6 @@
 'use server';
 
+import { checkMedals } from '@/server/notify';
 import { refresh } from 'next/cache';
 import type { ChannelVerification } from '@emberly/core';
 import { ExportFormatError } from '@emberly/telegram';
@@ -48,6 +49,8 @@ export async function importExportAction(_prev: ImportState, fd: FormData): Prom
   }
   try {
     const r = tg.importTelegramExport(user, json);
+    // Medals already earned in imported history are recorded without messaging.
+    await checkMedals(user.id, { silent: true }).catch(() => {});
     refresh();
     return {
       message: `Imported ${r.added} post${r.added === 1 ? '' : 's'} into ${r.channelTitle}${r.updated ? ` (${r.updated} already recorded)` : ''}.`,

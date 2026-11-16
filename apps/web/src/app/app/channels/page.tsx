@@ -6,7 +6,7 @@ import { ChannelStatusChip, SourceChip } from '@/components/ChannelStatus';
 import { IconCheck, IconHeart, IconX } from '@/components/icons';
 import { PanelSkeleton } from '@/components/Skeletons';
 import { requireUser } from '@/server/auth';
-import { telegramMode } from '@/server/config';
+import { telegramMode } from '@/server/botSettings';
 import { telegramBotUsername } from '@/server/platforms';
 import * as repo from '@/server/repo';
 
@@ -197,7 +197,7 @@ async function Channels() {
               Import past posts
             </h2>
             <p className="muted small" style={{ margin: '4px 0 14px' }}>
-              The bot only sees posts made after it joins. Add older ones from a Telegram export.
+              The bot only sees posts made after it joins. Once your channel is verified, add older ones from an export of its history.
             </p>
             <details className="small" style={{ marginBottom: 14 }}>
               <summary className="btn-text small">How do I export?</summary>
@@ -208,6 +208,10 @@ async function Channels() {
                   Upload <span className="code">result.json</span>
                 </li>
               </ol>
+              <p className="muted" style={{ marginTop: 10 }}>
+                No Telegram Desktop? Run <span className="code">scripts/telegram-history.py</span> on your computer. It signs in as you with Telethon and writes
+                the same JSON file, including reactions.
+              </p>
             </details>
             <ImportForm />
           </section>

@@ -5,8 +5,8 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
   return (
     <main id="main" className="auth">
       <div className="auth-box rise">
-        <Link href="/" className="brand" aria-label="Emberly home">
-          <Logo /> Emberly
+        <Link href="/" className="brand" aria-label="Tally home">
+          <Logo /> Tally
         </Link>
         <div className="auth-card">{children}</div>
       </div>

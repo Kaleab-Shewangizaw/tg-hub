@@ -29,6 +29,8 @@ export interface GridCell {
   goalMet: boolean;
   isToday: boolean;
   label: string;
+  /** Padding outside the selected calendar year (year view only). State is 'future'; render as empty space. */
+  outside?: boolean;
 }
 
 export interface GridBucket {
@@ -49,6 +51,8 @@ export interface ActivityGrid {
   rowWeekdays: number[];
   totals: { posts: number; activeDays: number; trackedDays: number };
   range: { start: ISODate; end: ISODate };
+  /** The calendar year shown, or null for the rolling last-year view. */
+  year: number | null;
 }
 
 function makeBuckets(maxCount: number): GridBucket[] {
@@ -88,14 +92,24 @@ export function buildActivityGrid(input: {
   today: ISODate;
   trackingStart: ISODate;
   weeks?: number;
+  /** Show this calendar year (Jan 1 – Dec 31) instead of the rolling last 53 weeks. */
+  year?: number | null;
 }): ActivityGrid {
   const { counts, schedule, today, trackingStart } = input;
-  const weekCount = input.weeks ?? 53;
-  const firstWeek = addDays(startOfWeek(today, schedule.weekStartsOn), -(weekCount - 1) * 7);
-  const lastDay = addDays(startOfWeek(today, schedule.weekStartsOn), 6);
+  const year = input.year ?? null;
+  const yearStart = year == null ? null : `${year}-01-01`;
+  const yearEnd = year == null ? null : `${year}-12-31`;
+  const anchor = yearEnd ?? today;
+  const firstWeek = yearStart ? startOfWeek(yearStart, schedule.weekStartsOn) : null;
+  const weekCount = firstWeek
+    ? Math.round((Date.parse(startOfWeek(anchor, schedule.weekStartsOn)) - Date.parse(firstWeek)) / (7 * 86_400_000)) + 1
+    : (input.weeks ?? 53);
+  const start = firstWeek ?? addDays(startOfWeek(today, schedule.weekStartsOn), -(weekCount - 1) * 7);
+  const lastDay = addDays(startOfWeek(anchor, schedule.weekStartsOn), 6);
+  const inRange = (d: ISODate) => (!yearStart || d >= yearStart) && (!yearEnd || d <= yearEnd);
 
   let maxCount = 0;
-  for (const [d, c] of counts) if (d >= firstWeek && d <= today && c > maxCount) maxCount = c;
+  for (const [d, c] of counts) if (d >= start && d <= today && inRange(d) && c > maxCount) maxCount = c;
   const buckets = makeBuckets(maxCount);
 
   const weeks: GridCell[][] = [];
@@ -106,10 +120,11 @@ export function buildActivityGrid(input: {
   for (let w = 0; w < weekCount; w++) {
     const column: GridCell[] = [];
     for (let r = 0; r < 7; r++) {
-      const date = addDays(firstWeek, w * 7 + r);
-      const count = date <= today ? counts.get(date) ?? 0 : 0;
+      const date = addDays(start, w * 7 + r);
+      const outside = !inRange(date);
+      const count = date <= today && !outside ? counts.get(date) ?? 0 : 0;
       let state: CellState;
-      if (date > today) state = 'future';
+      if (date > today || outside) state = 'future';
       // A post we hold (e.g. imported) is always shown, even before connection.
       else if (date < trackingStart && count === 0) state = 'untracked';
       else if (schedule.cadence.kind === 'days' && !isScheduledDay(date, schedule.cadence)) state = 'rest';
@@ -128,13 +143,14 @@ export function buildActivityGrid(input: {
         totals.posts += count;
         if (count > 0) totals.activeDays += 1;
       }
-      column.push({ date, count, level: levelFor(count, buckets), state, goalMet, isToday, label: describe(date, count, state, goalMet, isToday) });
+      column.push({ date, count, level: levelFor(count, buckets), state, goalMet, isToday, label: describe(date, count, state, goalMet, isToday), ...(outside ? { outside } : {}) });
     }
     // Label each month at the first column whose top cell falls in it.
-    const month = formatMonth(column[0]!.date);
+    // In year view, label by the first in-year day so January isn't named after December.
+    const month = formatMonth((column.find((c) => !c.outside) ?? column[0]!).date);
     if (month !== lastMonth) {
       // Skip a label squeezed into the very first column if the month changes right after.
-      const nextMonthSoon = w === 0 && formatMonth(addDays(firstWeek, 7)) !== month;
+      const nextMonthSoon = w === 0 && !yearStart && formatMonth(addDays(start, 7)) !== month;
       if (!nextMonthSoon) months.push({ column: w, label: month });
       lastMonth = month;
     }
@@ -142,5 +158,5 @@ export function buildActivityGrid(input: {
   }
 
   const rowWeekdays = Array.from({ length: 7 }, (_, i) => (schedule.weekStartsOn + i) % 7);
-  return { weeks, months, buckets, rowWeekdays, totals, range: { start: firstWeek, end: lastDay } };
+  return { weeks, months, buckets, rowWeekdays, totals, range: { start: yearStart ?? start, end: yearEnd ?? lastDay }, year };
 }

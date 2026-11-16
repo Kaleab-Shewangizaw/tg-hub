@@ -55,7 +55,7 @@ describe('Telegram pipeline (simulated updates through the real ingestion path)'
 
     const d = dashboard.loadDashboard(repo.getUser(user.id)!);
     expect(d.dashboard.totals).toMatchObject({ posts: 2, reactions: 6 });
-    expect(d.dashboard.medals.find((m) => m.id === 'first-spark')?.earned).toBe(true);
+    expect(d.dashboard.medals.find((m) => m.id === 'crowd-pleaser')).toMatchObject({ earned: false, value: 3 });
   });
 
   it('sends a due reminder exactly once, even when the job runs repeatedly', async () => {
@@ -74,5 +74,49 @@ describe('Telegram pipeline (simulated updates through the real ingestion path)'
     const outbox = repo.listDevOutbox(user.id);
     expect(outbox).toHaveLength(1);
     expect(outbox[0]!.text).toMatch(/gentle nudge/i);
+  });
+});
+
+describe('medal messages', () => {
+  it('records existing medals silently, then claims each new tier exactly once', async () => {
+    const notify = await import('@/server/notify');
+    const user = repo.createUser({ email: 'm@example.com', name: 'Mo', passwordHash: 'x', settings: repo.defaultSettings('UTC') })!;
+    await tg.handleTelegramUpdate(simulateBotAdded(simulatedChannel('Mo Channel', -1009191), 91), 'simulated');
+    repo.setTelegramAccount(user.id, '91', 'Mo');
+    repo.claimChannelsAddedBy('telegram', '91', user.id);
+    const ch = simulatedChannel('Mo Channel', -1009191);
+
+    // A post with 120 reactions already exists: first look is silent but recorded.
+    await tg.handleTelegramUpdate(simulateChannelPost(ch, 1, 'old hit'), 'simulated');
+    await tg.handleTelegramUpdate(simulateReactionCount(ch, 1, { '🔥': 120 }), 'simulated');
+    expect(repo.hasMedalNotices(user.id)).toBe(true);
+    expect(repo.claimMedalNotice(user.id, 'crowd-pleaser', 1)).toBe(false);
+
+    // Reaching 200 claims tier 2 (development mode never sends, but the claim is made once).
+    await tg.handleTelegramUpdate(simulateChannelPost(ch, 2, 'bigger hit'), 'simulated');
+    await tg.handleTelegramUpdate(simulateReactionCount(ch, 2, { '❤️': 210 }), 'simulated');
+    expect(repo.claimMedalNotice(user.id, 'crowd-pleaser', 2)).toBe(false);
+    expect(notify.medalMessage({ ...(await import('@emberly/core')).evaluateMedals({ posts: repo.listPostsForUser(user.id), timeZone: 'UTC' })[0]! })).toContain('Crowd Pleaser ×2');
+  });
+});
+
+describe('bot replies', () => {
+  const dm = (fromId: number, text: string) => ({
+    update_id: Math.floor(Math.random() * 1e9),
+    message: { message_id: 1, date: 0, chat: { id: fromId, type: 'private' as const }, from: { id: fromId, is_bot: false, first_name: 'Sam' }, text },
+  });
+
+  it('answers /start, /status and other messages, and leaves link codes to the pipeline', async () => {
+    const { botReply } = await import('@/server/botCommands');
+    expect(botReply(dm(987654, '/start'))?.text).toContain('Link Telegram');
+    expect(botReply(dm(987654, '/status'))?.text).toContain('isn’t linked');
+    expect(botReply(dm(987654, 'hello'))?.text).toContain('/status');
+    expect(botReply(dm(987654, '/start abcDEF123'))).toBeNull();
+
+    const user = repo.createUser({ email: 's@example.com', name: 'Sam Lee', passwordHash: 'x', settings: repo.defaultSettings('UTC') })!;
+    repo.setTelegramAccount(user.id, '987654', 'Sam');
+    expect(botReply(dm(987654, '/start'))?.text).toContain('Welcome back, Sam');
+    expect(botReply(dm(987654, '/status'))?.text).toContain('No channel connected yet');
+    expect(botReply(dm(987654, '/status'))?.chatId).toBe(987654);
   });
 });

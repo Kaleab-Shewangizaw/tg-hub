@@ -1,6 +1,6 @@
 import 'server-only';
 import { countPostsByDay, decideReminder, localDate, trackingStartFor, type ReminderSkipReason } from '@emberly/core';
-import { telegramMode } from './config';
+import { telegramMode } from './botSettings';
 import { telegramProvider } from './platforms';
 import * as repo from './repo';
 

@@ -135,35 +135,63 @@ describe('activity grid', () => {
     expect(cells.find((c) => c.date === '2025-12-01')!.state).toBe('untracked');
     expect(grid.buckets.map((b) => b.label)).toEqual(['1 post', '2 posts', '3–4 posts', '5+ posts']);
   });
+  it('shows a whole calendar year, counting only that year', () => {
+    const counts = countPostsByDay([post('2024-12-31T08:00:00Z'), post('2025-01-01T08:00:00Z'), post('2025-07-04T08:00:00Z'), post('2026-01-02T08:00:00Z')], 'UTC');
+    const grid = buildActivityGrid({ counts, schedule: daily(), today: '2026-03-05', trackingStart: '2024-06-01', year: 2025 });
+    const cells = grid.weeks.flat();
+    const inYear = cells.filter((c) => !c.outside);
+    expect(inYear).toHaveLength(365);
+    expect(inYear[0]!.date).toBe('2025-01-01');
+    expect(inYear.at(-1)!.date).toBe('2025-12-31');
+    expect(cells.find((c) => c.date === '2024-12-31')).toMatchObject({ outside: true, count: 0 });
+    expect(grid.totals.posts).toBe(2);
+    expect(grid.months[0]!.label).toBe('Jan');
+    expect(grid.year).toBe(2025);
+    expect(grid.range).toEqual({ start: '2025-01-01', end: '2025-12-31' });
+  });
+
+  it('lists every year since tracking began and falls back to the rolling view for the current year', () => {
+    const now = '2026-03-05T12:00:00Z';
+    const posts = [post('2024-05-01T08:00:00Z'), post('2026-03-01T08:00:00Z')];
+    const channels = [{ connectedAt: '2025-01-01T00:00:00Z' }];
+    expect(buildDashboard({ posts, channels, schedule: daily(), now }).years).toEqual([2026, 2025, 2024]);
+    expect(buildDashboard({ posts, channels, schedule: daily(), now, year: 2026 }).grid.year).toBeNull();
+    expect(buildDashboard({ posts, channels, schedule: daily(), now, year: 1999 }).grid.year).toBeNull();
+    const y2024 = buildDashboard({ posts, channels, schedule: daily(), now, year: 2024 });
+    expect(y2024.grid.year).toBe(2024);
+    expect(Object.keys(y2024.dayPosts)).toEqual(['2024-05-01']);
+  });
 });
 
 describe('medals', () => {
-  it('awards medals only from recorded data, with reasons', () => {
-    const posts: Post[] = [];
-    for (let i = 0; i < 12; i++) {
-      const day = addDays('2026-01-01', i);
-      posts.push(post(`${day}T12:00:00Z`, { id: `p${i}`, metrics: { reactions: { value: i === 5 ? 40 : 8, observedAt: '2026-02-01T00:00:00Z' } } }));
-    }
-    posts.push(post('2026-01-25T12:00:00Z', { id: 'back' })); // 12-day gap
-    const counts = countPostsByDay(posts, 'UTC');
-    const streaks = computeStreaks(evaluatePeriods({ schedule: daily(), counts, trackingStart: '2026-01-01', today: '2026-01-25' }), 'day');
-    const byId = Object.fromEntries(evaluateMedals({ posts, timeZone: 'UTC', streaks }).map((m) => [m.id, m]));
+  const reacted = (day: string, id: string, breakdown: { label: string; count: number }[]) =>
+    post(`${day}T12:00:00Z`, { id, metrics: { reactions: { value: breakdown.reduce((n, b) => n + b.count, 0), breakdown, observedAt: 'x' } } });
 
-    expect(byId['first-spark']!.earnedOn).toBe('2026-01-01');
-    expect(byId['body-of-work']!.tier).toBe(1);
-    expect(byId['body-of-work']!.earnedOn).toBe('2026-01-10');
-    expect(byId['kept-rhythm']!.tier).toBe(2); // best 12 → 3 and 7 tiers
-    expect(byId['welcome-back']!.earned).toBe(true);
-    expect(byId['crowd-favorite']!.evidence.postIds).toEqual(['p5']);
-    expect(byId['crowd-favorite']!.because).toContain('40 reactions');
+  it('awards Crowd Pleaser for a single post, with ×2 at 200 reactions', () => {
+    const one = evaluateMedals({ posts: [reacted('2026-01-01', 'a', [{ label: '🔥', count: 99 }])], timeZone: 'UTC' });
+    const cp = (m: typeof one) => m.find((x) => x.id === 'crowd-pleaser')!;
+    expect(cp(one).earned).toBe(false);
+    expect(cp(one).next).toEqual({ current: 99, target: 100, label: '100 reactions on one post' });
+
+    const two = evaluateMedals({ posts: [reacted('2026-01-01', 'a', [{ label: '🔥', count: 120 }]), reacted('2026-01-02', 'b', [{ label: '👍', count: 210 }])], timeZone: 'UTC' });
+    expect(cp(two)).toMatchObject({ earned: true, tier: 2, value: 210, mark: '200', earnedOn: '2026-01-02', evidence: { postIds: ['b'] } });
+    expect(cp(two).next).toEqual({ current: 210, target: 500, label: '500 reactions on one post for ×3' });
   });
 
-  it('does not award Crowd Favorite without enough reaction data', () => {
-    const posts = [post('2026-01-01T12:00:00Z', { metrics: { reactions: { value: 500, observedAt: 'x' } } })];
-    const streaks = computeStreaks([], 'day');
-    const cf = evaluateMedals({ posts, timeZone: 'UTC', streaks }).find((m) => m.id === 'crowd-favorite')!;
-    expect(cf.earned).toBe(false);
-    expect(cf.next).toEqual({ current: 1, target: 10, label: '10 posts with reaction data' });
+  it('totals each reaction type across posts, ignoring emoji variation selectors', () => {
+    const posts = [
+      reacted('2026-01-01', 'a', [{ label: '❤️', count: 60 }, { label: '🔥', count: 30 }]),
+      reacted('2026-01-02', 'b', [{ label: '❤', count: 50 }, { label: '🔥', count: 30 }]),
+    ];
+    const byId = Object.fromEntries(evaluateMedals({ posts, timeZone: 'UTC' }).map((m) => [m.id, m]));
+    expect(byId.heart).toMatchObject({ earned: true, tier: 1, value: 110, earnedOn: '2026-01-02', mark: '❤️' });
+    expect(byId.fire).toMatchObject({ earned: false, value: 60 });
+  });
+
+  it('awards Starstruck from stars given on Emberly', () => {
+    const stars = Array.from({ length: 12 }, (_, i) => `2026-02-${String(i + 1).padStart(2, '0')}T10:00:00Z`);
+    const s = evaluateMedals({ posts: [], timeZone: 'UTC', stars }).find((m) => m.id === 'starstruck')!;
+    expect(s).toMatchObject({ earned: true, tier: 1, value: 12, earnedOn: '2026-02-10' });
   });
 });
 
@@ -221,6 +249,6 @@ describe('demo data', () => {
     const dash = buildDashboard({ posts: a.posts, channels: [a.channel], schedule: a.schedule, now });
     expect(dash.progress.posted).toBe(3);
     expect(dash.progress.remaining).toBe(1);
-    expect(dash.medals.find((m) => m.id === 'welcome-back')!.earned).toBe(true);
+    expect(dash.medals.some((m) => m.earned)).toBe(true);
   });
 });

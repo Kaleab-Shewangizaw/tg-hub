@@ -19,15 +19,13 @@ export const config = {
     webhookSecret: env('TELEGRAM_WEBHOOK_SECRET'),
   },
   cronSecret: env('CRON_SECRET'),
+  /** Comma-separated emails that always have admin access (bootstrap). */
+  adminEmails: new Set(
+    (env('ADMIN_EMAILS') ?? '')
+      .split(',')
+      .map((e) => e.trim().toLowerCase())
+      .filter(Boolean),
+  ),
 };
 
-/**
- * `live`: a real bot token is configured; connections and reminders go
- * through Telegram. `development`: no token; the app offers a clearly
- * labelled simulator that feeds fake updates through the same pipeline.
- */
 export type IntegrationMode = 'live' | 'development';
-
-export function telegramMode(): IntegrationMode {
-  return config.telegram.botToken ? 'live' : 'development';
-}

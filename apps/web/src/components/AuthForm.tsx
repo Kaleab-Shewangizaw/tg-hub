@@ -66,7 +66,7 @@ export function AuthForm({ mode, action }: Props) {
           </>
         ) : (
           <>
-            New to Emberly? <Link href="/sign-up">Create an account</Link>
+            New to Tally? <Link href="/sign-up">Create an account</Link>
           </>
         )}
       </p>

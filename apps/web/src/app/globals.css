@@ -1,110 +1,81 @@
-/* Emberly design system.
-   Calm and quiet: neutral surfaces, hairline borders, one violet accent used
-   only where it carries meaning (progress, activity, the primary action).
-   Status colours stay soft: mint = goal met, slate = rest/break,
-   amber = needs attention. There is no red failure state anywhere. */
+/* Emberly design system: dark minimal.
+   Dark first (a light theme is one toggle away), near-black surfaces,
+   neutral hairline borders (never coloured) and a single blue accent used only where it carries
+   meaning: progress, activity and the primary action. One sans family;
+   numbers are set in mono. Status colours stay soft: mint = goal met,
+   slate = rest/break, amber = needs attention. No red failure states. */
 
 :root {
+  --bg: #0b0b0c;
+  --surface: #111113;
+  --surface-2: #18181b;
+  --surface-3: #232327;
+  --ink: #ededef;
+  --ink-2: #a1a1a9;
+  --ink-3: #6c6c75;
+  --line: #1f1f23;
+  --line-2: #2c2c32;
+
+  --accent: #3b82f6;
+  --accent-hover: #5b97f8;
+  --on-accent: #ffffff;
+  --accent-ink: #7eb0ff;
+  --accent-soft: #0f1c33;
+
+  --mint: #4ade80;
+  --mint-soft: #0f2417;
+  --slate: #a1a1aa;
+  --slate-soft: #1a1a1e;
+  --amber: #fbbf24;
+  --amber-soft: #2a210b;
+
+  --g0: #19191c;
+  --g1: #13284d;
+  --g2: #1d4386;
+  --g3: #2f6fe0;
+  --g4: #6aa6ff;
+
+  --shadow-sm: none;
+  --shadow-pop: 0 12px 32px -8px rgb(0 0 0 / 0.7), 0 0 0 1px var(--line-2);
+  color-scheme: dark;
+  --radius: 10px;
+  --radius-sm: 7px;
+  --ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--ink-3);
+
+  --font-sans: var(--font-geist), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: var(--font-sans);
+  --font-mono: var(--font-geist-mono), ui-monospace, 'SF Mono', Menlo, monospace;
+}
+
+:root[data-theme='light'] {
   --bg: #fafafa;
   --surface: #ffffff;
   --surface-2: #f4f4f5;
-  --surface-3: #e9e9ec;
-  --ink: #18181b;
+  --surface-3: #e7e7ea;
+  --ink: #0b0b0c;
   --ink-2: #52525b;
-  --ink-3: #8b8b94;
-  --line: #e8e8eb;
-  --line-2: #d8d8dd;
-
-  --accent: #6750e8;
-  --accent-hover: #5a43da;
+  --ink-3: #8a8a93;
+  --line: #e7e7ea;
+  --line-2: #d6d6db;
+  --accent: #2563eb;
+  --accent-hover: #1d4fd8;
   --on-accent: #ffffff;
-  --accent-ink: #5a43da;
-  --accent-soft: #f1effd;
-
-  --mint: #0f7f5a;
-  --mint-soft: #e8f5ef;
-  --slate: #5f6b7d;
-  --slate-soft: #eef0f3;
-  --amber: #965f0d;
-  --amber-soft: #fbf3e4;
-
-  --g0: #ececef;
-  --g1: #d9d3fb;
-  --g2: #b2a6f6;
-  --g3: #8572ee;
-  --g4: #5a43da;
-
-  --shadow-sm: 0 1px 2px rgb(24 24 27 / 0.05);
-  --shadow-pop: 0 1px 2px rgb(24 24 27 / 0.06), 0 8px 24px -6px rgb(24 24 27 / 0.12);
-  --radius: 12px;
-  --radius-sm: 8px;
-  --ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
-
-  --font-sans: var(--font-geist), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --accent-ink: #1d4ed8;
+  --accent-soft: #e9f0ff;
+  --mint: #15803d;
+  --mint-soft: #e8f7ec;
+  --slate: #5f6370;
+  --slate-soft: #eff0f2;
+  --amber: #a16207;
+  --amber-soft: #fbf3dc;
+  --g0: #ebebee;
+  --g1: #c9dcff;
+  --g2: #86b0fa;
+  --g3: #3f7cf0;
+  --g4: #1a4bc0;
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.04);
+  --shadow-pop: 0 12px 32px -8px rgb(0 0 0 / 0.18), 0 0 0 1px var(--line);
   color-scheme: light;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
-    --bg: #0e0e10;
-    --surface: #151518;
-    --surface-2: #1c1c20;
-    --surface-3: #26262b;
-    --ink: #f2f2f3;
-    --ink-2: #a1a1aa;
-    --ink-3: #71717a;
-    --line: #26262b;
-    --line-2: #34343a;
-    --accent: #8e7dff;
-    --accent-hover: #a193ff;
-    --on-accent: #0e0e10;
-    --accent-ink: #ada1ff;
-    --accent-soft: #1e1b33;
-    --mint: #45c895;
-    --mint-soft: #11251d;
-    --slate: #94a3b8;
-    --slate-soft: #1b1f26;
-    --amber: #e8b05a;
-    --amber-soft: #2a2214;
-    --g0: #1f1f24;
-    --g1: #2e2858;
-    --g2: #4a3ca6;
-    --g3: #7262ee;
-    --g4: #b1a6ff;
-    --shadow-sm: none;
-    --shadow-pop: 0 8px 24px -6px rgb(0 0 0 / 0.6);
-    color-scheme: dark;
-  }
-}
-:root[data-theme='dark'] {
-  --bg: #0e0e10;
-  --surface: #151518;
-  --surface-2: #1c1c20;
-  --surface-3: #26262b;
-  --ink: #f2f2f3;
-  --ink-2: #a1a1aa;
-  --ink-3: #71717a;
-  --line: #26262b;
-  --line-2: #34343a;
-  --accent: #8e7dff;
-  --accent-hover: #a193ff;
-  --on-accent: #0e0e10;
-  --accent-ink: #ada1ff;
-  --accent-soft: #1e1b33;
-  --mint: #45c895;
-  --mint-soft: #11251d;
-  --slate: #94a3b8;
-  --slate-soft: #1b1f26;
-  --amber: #e8b05a;
-  --amber-soft: #2a2214;
-  --g0: #1f1f24;
-  --g1: #2e2858;
-  --g2: #4a3ca6;
-  --g3: #7262ee;
-  --g4: #b1a6ff;
-  --shadow-sm: none;
-  --shadow-pop: 0 8px 24px -6px rgb(0 0 0 / 0.6);
-  color-scheme: dark;
 }
 
 /* ─── Base ───────────────────────────────────────────────────────────────── */
@@ -119,7 +90,7 @@ html {
 }
 body {
   margin: 0;
-  background: var(--bg);
+  background-color: var(--bg);
   color: var(--ink);
   font-family: var(--font-sans);
   font-size: 14.5px;
@@ -140,6 +111,24 @@ h3 {
   letter-spacing: -0.02em;
   line-height: 1.2;
   text-wrap: balance;
+}
+/* Page titles and hero numbers use the display serif. */
+h1,
+.display {
+  font-family: var(--font-display);
+  font-weight: 650;
+  letter-spacing: -0.035em;
+  line-height: 1.08;
+}
+h1 em,
+.display em,
+h2 em {
+  font-style: normal;
+  color: var(--accent-ink);
+}
+.mono {
+  font-family: var(--font-mono);
+  font-feature-settings: 'tnum';
 }
 a {
   color: inherit;
@@ -200,7 +189,8 @@ button {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  padding: 20px;
+  padding: 22px;
+  box-shadow: var(--shadow-sm);
 }
 .panel-head {
   display: flex;
@@ -210,9 +200,10 @@ button {
   margin-bottom: 16px;
 }
 .panel-title {
-  font-size: 14.5px;
+  font-size: 15px;
   font-weight: 600;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
 }
 .panel-sub {
   font-size: 13px;
@@ -243,7 +234,7 @@ button {
   justify-content: center;
   gap: 8px;
   height: 36px;
-  padding: 0 14px;
+  padding: 0 16px;
   border-radius: var(--radius-sm);
   border: 1px solid transparent;
   font-weight: 550;
@@ -389,12 +380,12 @@ a.chip:hover {
   border-color: color-mix(in srgb, var(--line-2) 60%, var(--ink-3));
 }
 .input:focus-visible {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-soft);
+  border-color: var(--ink-3);
+  box-shadow: 0 0 0 3px var(--surface-3);
   border-radius: var(--radius-sm);
 }
 .input[aria-invalid='true'] {
-  border-color: var(--amber);
+  border-color: var(--ink-2);
 }
 select.input {
   appearance: none;
@@ -441,21 +432,21 @@ select.input {
 }
 .banner-amber {
   background: var(--amber-soft);
-  border-color: color-mix(in srgb, var(--amber) 25%, transparent);
+  border-color: var(--line);
 }
 .banner-amber svg {
   color: var(--amber);
 }
 .banner-mint {
   background: var(--mint-soft);
-  border-color: color-mix(in srgb, var(--mint) 25%, transparent);
+  border-color: var(--line);
 }
 
 .alert {
   padding: 10px 14px;
   border-radius: var(--radius-sm);
   background: var(--amber-soft);
-  border: 1px solid color-mix(in srgb, var(--amber) 25%, transparent);
+  border: 1px solid var(--line);
   font-size: 13.5px;
 }
 
@@ -488,7 +479,7 @@ select.input {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 15px;
+  font-size: 15.5px;
   font-weight: 650;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
 }

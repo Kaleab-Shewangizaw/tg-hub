@@ -2,11 +2,11 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { IconHome, IconLink, IconMedal, IconSliders } from './icons';
+import { IconCompass, IconHome, IconLink, IconSliders } from './icons';
 
 const LINKS = [
   { href: '/app', label: 'Overview', Icon: IconHome },
-  { href: '/app/medals', label: 'Medals', Icon: IconMedal },
+  { href: '/explore', label: 'Explore', Icon: IconCompass },
   { href: '/app/channels', label: 'Channels', Icon: IconLink },
   { href: '/app/settings', label: 'Settings', Icon: IconSliders },
 ];

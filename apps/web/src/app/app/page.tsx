@@ -6,15 +6,16 @@ import { ChannelStatusChip } from '@/components/ChannelStatus';
 import { DashboardView } from '@/components/Dashboard';
 import { IconArrow, IconInfo, IconTelegram } from '@/components/icons';
 import { DashboardSkeleton } from '@/components/Skeletons';
+import { parseYear } from '@/components/YearList';
 import { requireUser } from '@/server/auth';
 import { loadDashboard } from '@/server/dashboard';
 
 export const metadata: Metadata = { title: 'Overview' };
 
-export default function OverviewPage() {
+export default function OverviewPage({ searchParams }: PageProps<'/app'>) {
   return (
     <Suspense fallback={<DashboardSkeleton />}>
-      <Overview />
+      <Overview searchParams={searchParams} />
     </Suspense>
   );
 }
@@ -26,9 +27,10 @@ function greeting(minutes: number) {
   return 'Good evening';
 }
 
-async function Overview() {
+async function Overview({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const user = await requireUser();
-  const data = loadDashboard(user);
+  const { year } = await searchParams;
+  const data = loadDashboard(user, new Date(), parseYear(year));
   const { channels, dashboard } = data;
   const first = user.name.split(' ')[0];
   const { minutes } = zonedParts(new Date(), user.settings.timeZone);
@@ -40,7 +42,7 @@ async function Overview() {
           <IconTelegram size={22} />
         </span>
         <h1>Welcome, {first}</h1>
-        <p className="muted">Connect your Telegram channel and Emberly will start mapping your posts. It takes about two minutes.</p>
+        <p className="muted">Connect your Telegram channel and Tally will start mapping your posts. It takes about two minutes.</p>
         <div className="onboard-ctas">
           <Link href="/app/channels" className="btn btn-accent btn-lg">
             Connect a channel <IconArrow size={16} />
@@ -70,6 +72,9 @@ async function Overview() {
               Simulated
             </Link>
           ) : null}
+          <Link href={`/u/${user.handle}`} className="chip">
+            View public profile
+          </Link>
           {channels.length === 1 ? (
             <Link href="/app/channels">
               <ChannelStatusChip status={channels[0]!.status} />

@@ -2,10 +2,12 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Suspense } from 'react';
 import { runRemindersNowAction } from '@/app/actions/channels';
+import { MedalMessagesToggle } from '@/components/NotifyToggle';
+import { ProfileForm } from '@/components/ProfileForm';
 import { SettingsForm } from '@/components/SettingsForm';
 import { PanelSkeleton } from '@/components/Skeletons';
 import { requireUser } from '@/server/auth';
-import { telegramMode } from '@/server/config';
+import { telegramMode } from '@/server/botSettings';
 import * as repo from '@/server/repo';
 
 export const metadata: Metadata = { title: 'Settings' };
@@ -25,11 +27,11 @@ async function Settings() {
   const last = repo.recentReminders(user.id, 1)[0];
 
   return (
-    <>
+    <div className="settings-page">
       <div className="page-head rise">
         <div>
           <h1>Settings</h1>
-          <p className="page-head-desc">Your posting goal, reminders and breaks.</p>
+          <p className="page-head-desc">Your profile, posting goal, reminders and breaks.</p>
         </div>
       </div>
 
@@ -38,6 +40,10 @@ async function Settings() {
           Reminders need a linked Telegram account. <Link href="/app/channels">Link Telegram</Link>
         </p>
       ) : null}
+
+      <div className="settings">
+        <ProfileForm initial={{ name: user.name, handle: user.handle, bio: user.bio, profilePublic: user.profilePublic }} />
+      </div>
 
       <SettingsForm initial={user.settings} />
 
@@ -73,6 +79,50 @@ async function Settings() {
           )}
         </section>
       ) : null}
-    </>
+
+      <section className="panel" aria-labelledby="tgmsg-h">
+        <h2 id="tgmsg-h" className="panel-title">
+          Telegram messages
+        </h2>
+        <div className="set-toggle-row">
+          <div>
+            <p className="set-toggle-title">Medal messages</p>
+            <p className="small muted">The bot tells you when you earn a medal or reach ×2, ×3, ×4.</p>
+          </div>
+          <MedalMessagesToggle on={user.notifyMedals} />
+        </div>
+        {!user.telegramUserId ? (
+          <p className="small faint">
+            Messages need a linked Telegram account. <Link href="/app/channels">Link Telegram</Link>
+          </p>
+        ) : null}
+      </section>
+
+      <section className="panel" aria-labelledby="more-h">
+        <h2 id="more-h" className="panel-title">
+          More
+        </h2>
+        <ul className="set-links">
+          <li>
+            <Link href="/app/medals">
+              <span>
+                <strong>Medals</strong>
+                <span className="small muted">The medals your posts have earned, and what’s next.</span>
+              </span>
+              <span aria-hidden>→</span>
+            </Link>
+          </li>
+          <li>
+            <Link href={`/u/${user.handle}`}>
+              <span>
+                <strong>Public profile</strong>
+                <span className="small muted">See your profile the way others do.</span>
+              </span>
+              <span aria-hidden>→</span>
+            </Link>
+          </li>
+        </ul>
+      </section>
+    </div>
   );
 }

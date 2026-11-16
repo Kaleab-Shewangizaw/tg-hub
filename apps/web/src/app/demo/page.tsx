@@ -15,8 +15,8 @@ export default function DemoPage() {
       </div>
       <header className="topbar">
         <div className="topbar-inner">
-          <Link href="/" className="brand" aria-label="Emberly home">
-            <Logo /> <span className="brand-word">Emberly</span>
+          <Link href="/" className="brand" aria-label="Tally home">
+            <Logo /> <span className="brand-word">Tally</span>
           </Link>
           <div className="topbar-right">
             <ThemeToggle />
